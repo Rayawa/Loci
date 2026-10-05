@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "在地点中保存你的记忆"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Loci"
+    },
+    {
+      "name": "location_reason",
+      "value": "用于记录你选择的当前位置，形成个人足迹"
+    }
+  ]
+}

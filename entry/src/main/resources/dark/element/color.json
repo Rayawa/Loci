@@ -1,0 +1,32 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#000000"
+    },
+    {
+      "name": "loci_background",
+      "value": "#15221D"
+    },
+    {
+      "name": "loci_surface",
+      "value": "#21322A"
+    },
+    {
+      "name": "loci_ink",
+      "value": "#E5EEE6"
+    },
+    {
+      "name": "loci_muted",
+      "value": "#A3B6A8"
+    },
+    {
+      "name": "loci_accent",
+      "value": "#739A7D"
+    },
+    {
+      "name": "loci_line",
+      "value": "#34473B"
+    }
+  ]
+}
