@@ -52,13 +52,31 @@ export class AtlasViewModel {
     this.places = places;
   }
 
+  async retryPlaces(): Promise<void> {
+    if (this.loading || !this.ready) { return; }
+    this.loading = true;
+    try {
+      await this.refresh();
+      this.error = '';
+    } catch (_) {
+      this.error = '暂时无法更新地点，请稍后重试';
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  clearFilters(): void {
+    this.city = '';
+    this.year = '';
+  }
+
   filteredPlaces(): Place[] {
     return this.places.filter((place: Place) => (!this.city || place.city === this.city) &&
       (!this.year || place.visitedYears.includes(this.year)));
   }
 
   selectedPlace(): Place | undefined {
-    return this.places.find((place: Place) => place.id === this.selectedPlaceId);
+    return this.filteredPlaces().find((place: Place) => place.id === this.selectedPlaceId);
   }
 
   nearby(draft: VisitDraft): Place[] {

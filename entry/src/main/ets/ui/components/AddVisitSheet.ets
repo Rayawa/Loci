@@ -1,3 +1,4 @@
+import { ActionButton } from './ActionButton';
 import { Place, RecordedVisit, VisitDraft } from '../../domain/model/Atlas';
 import { AtlasViewModel } from '../viewmodel/AtlasViewModel';
 import { MoodSelector } from './MoodSelector';
@@ -66,13 +67,10 @@ export struct AddVisitSheet {
         if (!this.draft.existingPlaceId && this.model.nearby(this.draft).length > 0) {
           Text('附近已有地点，你可以选择再次到访').fontSize(13).fontColor(Theme.muted)
           ForEach(this.model.nearby(this.draft), (place: Place) => {
-            Button(`${this.existingId === place.id ? '已选择 · ' : ''}${place.name} · ${place.visitCount} 次`)
-              .width('100%').backgroundColor(this.existingId === place.id ? Theme.accent : Theme.background)
-              .fontColor(this.existingId === place.id ? Color.White : Theme.ink)
-              .onClick(() => { this.existingId = place.id; this.changed(); })
+            ActionButton({ label: `${this.existingId === place.id ? '已选择 · ' : ''}${place.name} · ${place.visitCount} 次`,
+              highlighted: this.existingId === place.id, onAction: () => { this.existingId = place.id; this.changed(); } })
           }, (place: Place) => place.id)
-          Button('记录为一个新地点').backgroundColor(Theme.background).fontColor(Theme.ink)
-            .onClick(() => { this.existingId = ''; this.changed(); })
+          ActionButton({ label: '记录为一个新地点', onAction: () => { this.existingId = ''; this.changed(); } })
         }
         if (!this.existingId) {
           TextInput({ text: this.name, placeholder: '给这个地点一个名字' }).maxLength(120).onChange((value: string) => { this.name = value; this.changed(); })
@@ -95,9 +93,9 @@ export struct AddVisitSheet {
         if (this.error) {
           Text(this.error).fontColor(Theme.ink).fontSize(14)
         }
-        Button(this.saving ? '正在保存…' : '保存这段记忆').width('100%').height(48).backgroundColor(Theme.accent)
-          .enabled(!this.saving).onClick(() => this.save()).id('saveVisit')
-      }.padding({ left: 24, right: 24, top: 20, bottom: 36 }).width('100%').enabled(!this.saving)
+        ActionButton({ label: this.saving ? '正在保存…' : '保存这段记忆', highlighted: true,
+          available: !this.saving, onAction: () => this.save() }).id('saveVisit')
+      }.padding({ left: Theme.pagePadding, right: Theme.pagePadding, top: 20, bottom: 36 }).width('100%').enabled(!this.saving)
     }.width('100%').height('100%').backgroundColor(Theme.surface)
   }
 }

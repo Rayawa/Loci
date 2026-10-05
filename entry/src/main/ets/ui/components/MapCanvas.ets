@@ -1,3 +1,4 @@
+import { ActionButton } from './ActionButton';
 import { common } from '@kit.AbilityKit';
 import { AsyncCallback } from '@kit.BasicServicesKit';
 import { MapComponent, map, mapCommon } from '@kit.MapKit';
@@ -19,7 +20,8 @@ export struct MapCanvas {
   private active: boolean = true;
   private options: mapCommon.MapOptions = {
     position: { target: { latitude: 39.925, longitude: 116.397 }, zoom: 11 },
-    zoomControlsEnabled: false
+    zoomControlsEnabled: false,
+    dayNightMode: mapCommon.DayNightMode.AUTO
   };
   private markerClick: (marker: map.Marker) => void = (marker: map.Marker) => {
     const id = this.mapController?.placeId(marker) ?? '';
@@ -94,12 +96,12 @@ export struct MapCanvas {
       if (this.error) {
         Column({ space: 8 }) {
           Text(this.error).fontSize(14).fontColor(Theme.ink)
-          Button('重试地图').onClick(() => {
+          ActionButton({ label: '重试地图', highlighted: true, onAction: () => {
             this.release();
             this.error = '';
             this.retryKey++;
-          })
-        }.padding(16).margin({ top: 90, left: 24, right: 24 }).backgroundColor(Theme.surface).borderRadius(20)
+          } })
+        }.padding(Theme.pagePadding).margin({ top: 90, left: 24, right: 24 }).backgroundColor(Theme.surface).borderRadius(Theme.cardRadius)
       }
     }.width('100%').height('100%')
   }

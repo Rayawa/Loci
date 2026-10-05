@@ -28,6 +28,9 @@ export function validateVisit(draft: VisitDraft): void {
   if (!Number.isFinite(draft.visitedAt) || draft.visitedAt < 0 || draft.visitedAt > Date.now() + 60000) {
     throw new Error('到访时间须为现在或过去的有效时间');
   }
+  if (!Number.isInteger(draft.utcOffsetMinutes) || Math.abs(draft.utcOffsetMinutes) > 840) {
+    throw new Error('到访时区无效，请重新选择日期');
+  }
 }
 
 export function visitLocalDate(timestamp: number, offsetMinutes: number): string {

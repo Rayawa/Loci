@@ -1,5 +1,8 @@
-import { SymbolGlyphModifier } from '@kit.ArkUI';
-import { HdsNavDestination } from '@kit.UIDesignKit';
+import { destinationTitle } from '../theme/NavigationStyle';
+import { ExperienceSettings } from '../../service/settings/ExperienceSettings';
+import { Icons } from '../../common/icons';
+import { pageTransition } from '../../common/motion';
+import { HdsNavDestination, HdsNavDestinationTitleMode } from '@kit.UIDesignKit';
 import { MoodSelector } from '../components/MoodSelector';
 import { StatePanel } from '../components/StatePanel';
 import { Theme } from '../theme/Theme';
@@ -8,6 +11,7 @@ import { MemoryViewModel } from '../viewmodel/MemoryViewModel';
 
 @ComponentV2
 export struct MemoryPage {
+  @Local experience: ExperienceSettings = ExperienceSettings.shared;
   @Require @Param atlas: AtlasViewModel;
   @Require @Param visitId: string;
   @Require @Param stack: NavPathStack;
@@ -53,11 +57,11 @@ export struct MemoryPage {
             }
 
           }
-        }.padding(24).width('100%')
+        }.padding(Theme.pagePadding).width('100%')
       }.height('100%').width('100%').backgroundColor(Theme.background)
-    }.titleBar({ content: { title: { mainTitle: '这一段记忆' } } }).onBackPressed(() => this.onBack())
+    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('这一段记忆', this.experience.materialLevel)).onBackPressed(() => this.onBack())
       .toolbarConfiguration([{ value: this.model.saving ? '正在保存…' : '保存记忆',
-        symbolIcon: new SymbolGlyphModifier($r('sys.symbol.checkmark')),
+        symbolIcon: Icons.modifier(Icons.save),
         status: this.model.saving || this.model.loading || !this.model.visit || !this.model.dirty() ? ToolbarItemStatus.DISABLED : ToolbarItemStatus.NORMAL,
         action: () => this.model.save(this.atlas.getRepository()) }])
   }

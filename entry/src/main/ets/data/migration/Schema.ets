@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION: number = 1;
+export const SCHEMA_VERSION: number = 2;
 
 export const SCHEMA_V1: string[] = [
   `CREATE TABLE places (
@@ -32,3 +32,19 @@ export const PLACE_SUMMARY_SQL: string = `SELECT p.*, COUNT(v.id) AS visit_count
   GROUP_CONCAT(DISTINCT SUBSTR(v.local_date, 1, 4)) AS visited_years,
   COALESCE(MIN(v.visited_at), 0) AS first_visited_at, COALESCE(MAX(v.visited_at), 0) AS last_visited_at
   FROM places p LEFT JOIN visits v ON v.place_id = p.id`;
+
+// ArkData transaction connections do not inherit a store connection's foreign_keys PRAGMA.
+// Schema triggers enforce the same relationship on every connection, including new transactions.
+export const SCHEMA_V2: string[] = [
+  `CREATE TRIGGER IF NOT EXISTS visits_parent_insert BEFORE INSERT ON visits
+    WHEN NOT EXISTS (SELECT 1 FROM places WHERE id = NEW.place_id)
+    BEGIN SELECT RAISE(ABORT, 'Visit requires an existing Place'); END`,
+  `CREATE TRIGGER IF NOT EXISTS visits_parent_update BEFORE UPDATE OF place_id ON visits
+    WHEN NOT EXISTS (SELECT 1 FROM places WHERE id = NEW.place_id)
+    BEGIN SELECT RAISE(ABORT, 'Visit requires an existing Place'); END`,
+  `CREATE TRIGGER IF NOT EXISTS places_visit_cascade AFTER DELETE ON places
+    BEGIN DELETE FROM visits WHERE place_id = OLD.id; END`,
+  `CREATE TRIGGER IF NOT EXISTS places_identity_guard BEFORE UPDATE OF id ON places
+    WHEN OLD.id != NEW.id AND EXISTS (SELECT 1 FROM visits WHERE place_id = OLD.id)
+    BEGIN SELECT RAISE(ABORT, 'Place identity is stable'); END`
+];

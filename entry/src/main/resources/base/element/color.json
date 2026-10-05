@@ -5,28 +5,52 @@
       "value": "#FFFFFF"
     },
     {
-      "name": "loci_background",
-      "value": "#F4F2EC"
+      "name": "background",
+      "value": "#FFF6F9FF"
     },
     {
-      "name": "loci_surface",
-      "value": "#FFFEFA"
+      "name": "diff_content",
+      "value": "#1E6FCD"
     },
     {
-      "name": "loci_ink",
-      "value": "#283B35"
+      "name": "nd_card_border",
+      "value": "#D8E4F2"
     },
     {
-      "name": "loci_muted",
-      "value": "#718078"
+      "name": "v3_surface",
+      "value": "#FFFFFFFF"
     },
     {
-      "name": "loci_accent",
-      "value": "#416B57"
+      "name": "v3_surface_alt",
+      "value": "#FFF0F4FA"
     },
     {
-      "name": "loci_line",
-      "value": "#DFE4DD"
+      "name": "v3_text_primary",
+      "value": "#FF172033"
+    },
+    {
+      "name": "v3_text_secondary",
+      "value": "#FF5F6B7A"
+    },
+    {
+      "name": "v3_scrim",
+      "value": "#66000000"
+    },
+    {
+      "name": "v3_success_bg",
+      "value": "#FFE8F7EF"
+    },
+    {
+      "name": "v3_warning_bg",
+      "value": "#FFFFF4DE"
+    },
+    {
+      "name": "v3_shadow",
+      "value": "#1A1A2B45"
+    },
+    {
+      "name": "on_accent",
+      "value": "#FFFFFFFF"
     }
   ]
 }

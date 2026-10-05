@@ -1,3 +1,4 @@
+import { ActionButton } from './ActionButton';
 import { Place } from '../../domain/model/Atlas';
 import { Theme } from '../theme/Theme';
 import { AtlasViewModel } from '../viewmodel/AtlasViewModel';
@@ -21,21 +22,17 @@ export struct MapFilters {
       Column({ space: 18 }) {
         Text('回到某一段足迹').fontSize(26).fontColor(Theme.ink)
         Text('城市').fontSize(15).fontColor(Theme.muted).width('100%')
-        Button('全部城市').width('100%').backgroundColor(this.model.city ? Theme.background : Theme.accent)
-          .fontColor(this.model.city ? Theme.ink : Color.White).onClick(() => this.model.city = '')
+        ActionButton({ label: '全部城市', highlighted: !this.model.city, onAction: () => this.model.city = '' })
         ForEach(this.cities(), (city: string) => {
-          Button(city).width('100%').backgroundColor(this.model.city === city ? Theme.accent : Theme.background)
-            .fontColor(this.model.city === city ? Color.White : Theme.ink).onClick(() => this.model.city = city)
+          ActionButton({ label: city, highlighted: this.model.city === city, onAction: () => this.model.city = city })
         }, (city: string) => city)
         Text('年份').fontSize(15).fontColor(Theme.muted).width('100%')
-        Button('全部年份').width('100%').backgroundColor(this.model.year ? Theme.background : Theme.accent)
-          .fontColor(this.model.year ? Theme.ink : Color.White).onClick(() => this.model.year = '')
+        ActionButton({ label: '全部年份', highlighted: !this.model.year, onAction: () => this.model.year = '' })
         ForEach(this.years(), (year: string) => {
-          Button(year).width('100%').backgroundColor(this.model.year === year ? Theme.accent : Theme.background)
-            .fontColor(this.model.year === year ? Color.White : Theme.ink).onClick(() => this.model.year = year)
+          ActionButton({ label: year, highlighted: this.model.year === year, onAction: () => this.model.year = year })
         }, (year: string) => year)
         Text(`当前显示 ${this.model.filteredPlaces().length} 个地点`).fontSize(14).fontColor(Theme.muted)
-      }.padding(24).width('100%')
+      }.padding(Theme.pagePadding).width('100%')
     }.height('100%').width('100%').backgroundColor(Theme.surface)
   }
 }

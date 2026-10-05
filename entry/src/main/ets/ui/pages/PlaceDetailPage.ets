@@ -1,5 +1,8 @@
-import { SymbolGlyphModifier } from '@kit.ArkUI';
-import { HdsNavDestination } from '@kit.UIDesignKit';
+import { destinationTitle } from '../theme/NavigationStyle';
+import { ExperienceSettings } from '../../service/settings/ExperienceSettings';
+import { Icons } from '../../common/icons';
+import { pageTransition } from '../../common/motion';
+import { HdsNavDestination, HdsNavDestinationTitleMode } from '@kit.UIDesignKit';
 import { Visit } from '../../domain/model/Atlas';
 import { StatePanel } from '../components/StatePanel';
 import { MapCanvas } from '../components/MapCanvas';
@@ -11,6 +14,7 @@ import { PlaceHistoryViewModel } from '../viewmodel/PlaceHistoryViewModel';
 
 @ComponentV2
 export struct PlaceDetailPage {
+  @Local experience: ExperienceSettings = ExperienceSettings.shared;
   @Require @Param atlas: AtlasViewModel;
   @Require @Param placeId: string;
   @Require @Param stack: NavPathStack;
@@ -38,7 +42,7 @@ export struct PlaceDetailPage {
               }
             }.width('100%').alignItems(HorizontalAlign.Start)
             MapCanvas({ places: [this.model.place], focus: this.model.place, selectedId: this.placeId })
-              .height(180).clip(true).borderRadius(24)
+              .height(180).clip(true).borderRadius(Theme.cardRadius)
             Row() {
               Column({ space: 6 }) {
                 Text(`${this.model.place.visitCount} 次到访`).fontSize(22).fontColor(Theme.ink)
@@ -59,10 +63,10 @@ export struct PlaceDetailPage {
                 onOpen: () => this.stack.pushPathByName(Routes.Memory, new EntityRoute(visit.id)) })
             }, (visit: Visit) => visit.id)
           }
-        }.width('100%').padding(24)
+        }.width('100%').padding(Theme.pagePadding)
       }.height('100%').width('100%').backgroundColor(Theme.background)
-    }.titleBar({ content: { title: { mainTitle: '地点记忆' } } }).onActive(() => this.load())
-      .toolbarConfiguration([{ value: '再次来到这里', symbolIcon: new SymbolGlyphModifier($r('sys.symbol.plus')),
+    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('地点记忆', this.experience.materialLevel)).onActive(() => this.load())
+      .toolbarConfiguration([{ value: '再次来到这里', symbolIcon: Icons.modifier(Icons.add),
         status: this.model.place ? ToolbarItemStatus.NORMAL : ToolbarItemStatus.DISABLED,
         action: () => { if (this.model.place) { this.atlas.revisit(this.model.place); } } }])
   }

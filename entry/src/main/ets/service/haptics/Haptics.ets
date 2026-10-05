@@ -1,11 +1,8 @@
-import { vibrator } from '@kit.SensorServiceKit';
+import { vibration } from '../../common/vibration';
 
+// Loci emits business events; feedback comes from Dashboard's unchanged implementation.
 export class Haptics {
-  static async confirm(): Promise<void> {
-    try {
-      await vibrator.startVibration({ type: 'time', duration: 18 }, { usage: 'touch' });
-    } catch (_) {
-      // A failed or unsupported haptic must never turn a committed memory into a failed save.
-    }
-  }
+  static confirm(): void { vibration.dotVibration(); }
+  static back(): void { vibration.backVibration(); }
+  static error(): void { vibration.errorVibration(); }
 }

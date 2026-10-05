@@ -6,6 +6,16 @@
       "phone"
     ],
     "deliveryWithInstall": true,
-    "installationFree": false
+    "installationFree": false,
+    "mainElement": "TestAbility",
+    "abilities": [
+      {
+        "name": "TestAbility",
+        "srcEntry": "./ets/testability/TestAbility.ets",
+        "exported": false,
+        "startWindowIcon": "$media:layered_image",
+        "startWindowBackground": "$color:test_start_background"
+      }
+    ]
   }
 }

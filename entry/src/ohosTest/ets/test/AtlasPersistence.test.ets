@@ -1,7 +1,9 @@
 import { beforeEach, afterEach, describe, expect, it } from '@ohos/hypium';
+import { common } from '@kit.AbilityKit';
 import { abilityDelegatorRegistry } from '@kit.TestKit';
 import { relationalStore } from '@kit.ArkData';
 import { util } from '@kit.ArkTS';
+import { SCHEMA_V1, SCHEMA_VERSION } from '../../../main/ets/data/migration/Schema';
 import { AtlasDatabase } from '../../../main/ets/data/database/AtlasDatabase';
 import { RdbAtlasRepository } from '../../../main/ets/data/repository/RdbAtlasRepository';
 import { CoordinateSystem, VisitDraft, VisitSource } from '../../../main/ets/domain/model/Atlas';
@@ -19,12 +21,12 @@ function draft(name: string = '北海公园'): VisitDraft {
   return value;
 }
 
-export default function atlasPersistenceTest(): void {
+export default function atlasPersistenceTest(testContext?: common.Context): void {
   describe('AtlasPersistence', () => {
     let store: relationalStore.RdbStore;
     let repository: RdbAtlasRepository;
     let databaseName: string = '';
-    const context = abilityDelegatorRegistry.getAbilityDelegator().getAppContext();
+    const context: common.Context = testContext ?? abilityDelegatorRegistry.getAbilityDelegator().getAppContext();
 
     beforeEach(async () => {
       databaseName = `loci-test-${util.generateRandomUUID()}.db`;
@@ -148,11 +150,38 @@ export default function atlasPersistenceTest(): void {
       store = await AtlasDatabase.open(context, databaseName);
       repository = new RdbAtlasRepository(store);
       const history = await repository.getPlaceHistory(first.placeId);
-      expect(store.version).assertEqual(1);
+      expect(store.version).assertEqual(SCHEMA_VERSION);
       expect(history.place.id).assertEqual(first.placeId);
       expect(history.visits[0].id).assertEqual(first.visitId);
       expect(history.visits[0].diary).assertEqual('重新打开时仍然存在');
       expect(history.visits[0].mood).assertEqual(3);
     });
+    it('v1UpgradePreservesMemoryAndEnforcesRelationships', 0, async () => {
+      const legacyName = `loci-test-upgrade-${util.generateRandomUUID()}.db`;
+      let legacy = await relationalStore.getRdbStore(context, { name: legacyName, securityLevel: relationalStore.SecurityLevel.S3 });
+      try {
+        for (const sql of SCHEMA_V1) { await legacy.executeSql(sql); }
+        await legacy.executeSql('PRAGMA user_version = 1');
+        const oldRepository = new RdbAtlasRepository(legacy);
+        const record = await oldRepository.recordVisit(draft());
+        await legacy.close();
+        legacy = await AtlasDatabase.open(context, legacyName);
+        expect(legacy.version).assertEqual(SCHEMA_VERSION);
+        const history = await new RdbAtlasRepository(legacy).getPlaceHistory(record.placeId);
+        expect(history.visits[0].id).assertEqual(record.visitId);
+        expect(history.visits[0].diary).assertEqual('第一次到访');
+        let rejected = false;
+        try { await legacy.executeSql('UPDATE visits SET place_id = ? WHERE id = ?', ['missing', record.visitId]); }
+        catch (_) { rejected = true; }
+        expect(rejected).assertTrue();
+        await legacy.executeSql('DELETE FROM places WHERE id = ?', [record.placeId]);
+        const orphan = await legacy.querySql('SELECT id FROM visits WHERE id = ?', [record.visitId]);
+        try { expect(orphan.rowCount).assertEqual(0); } finally { orphan.close(); }
+      } finally {
+        await legacy.close();
+        await relationalStore.deleteRdbStore(context, legacyName);
+      }
+    });
+
   });
 }

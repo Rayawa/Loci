@@ -16,10 +16,14 @@
 | MapComponent / getEventManager / marker / rectifyCoordinate | 12 | 地图、事件、旗帜、区域坐标归一；需要 AGC 地图服务 |
 | geoLocationManager.getCurrentLocation / getAddressesFromLocation | 9 | 用户触发单次定位与可失败的逆地理编码 |
 | abilityAccessCtrl.requestPermissionsFromUser | 9 | 按需申请近似与精确定位 |
-| hdsEffect.HdsEffectBuilder.pressShadow | 20 | Mood 与 VisitCard 按压渐变；Touch Up/Cancel 恢复 NONE |
-| vibrator.startVibration（time） | 9 | 保存成功与 Mood 选择轻触感；权限/设备失败静默降级 |
+| hdsEffect.HdsEffectBuilder.pointLight | 20 | 原样复用 Dashboard 的按压光場与松开恢复 |
+| HdsTabs.barFloatingStyle / titleBar systemMaterialEffect | 23 | 原样复用 Dashboard 的 adaptive 材质与等级 |
+| uiEffect.Filter.hdrBrightnessRatio | 24 | 仅高亮档按压时启用；API 23 降级普通光场，配置 HDR_BRIGHTNESS 权限 |
+| vibrator preset / isSupportEffectSync / getVibratorInfoSync | 12 / 12 / 19 | 原样复制 Dashboard 的预置波形、能力检查、去重与三档设置；设备失败降级 |
+| HdsNavDestinationTitleMode.MINI | 20 | 二级标题栏 |
+| AbilityDelegator.startAbility | 9 | 原生测试能力启动，测试包内使用 |
 
-所有当前选用接口起始版本均低于 23。运行环境还需满足对应 SystemCapability；定位和地图失败有 UI 错误路径。现有构建警告中的能力检查与异常提示不能当作设备验证通过。
+除已做运行时隔离的 API 24 HDR 外，当前选用接口起始版本均不高于 23。运行环境还需满足对应 SystemCapability；定位和地图失败有 UI 错误路径。现有构建警告中的能力检查与异常提示不能当作设备验证通过。
 
 沉浸光感 `uiMaterial` 起始 API 26，尚未加入当前代码。后续仅在系统版本与设备支持均满足时启用，23–25 保留语义色/已有 HDS 材质。不能只添加 if 就宣称跨版本兼容。球形地图既有接口 since 15，后续 Atlas 探索，不属于当前核心。
 

@@ -1,3 +1,4 @@
+import { Icons } from '../../common/icons';
 import { common } from '@kit.AbilityKit';
 import { map, mapCommon } from '@kit.MapKit';
 import { CoordinateSystem, Place } from '../../domain/model/Atlas';
@@ -52,7 +53,7 @@ export class PlaceMapController {
             title: place.name,
             snippet: `来到这里 ${place.visitCount} 次`,
             clickable: true,
-            icon: $r('app.media.loci_flag'),
+            icon: Icons.marker,
             anchorU: 0.22, anchorV: 1
           });
           if (this.disposed) {

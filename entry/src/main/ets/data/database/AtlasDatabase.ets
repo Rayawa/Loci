@@ -1,6 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { relationalStore } from '@kit.ArkData';
-import { SCHEMA_V1, SCHEMA_VERSION } from '../migration/Schema';
+import { SCHEMA_V1, SCHEMA_V2, SCHEMA_VERSION } from '../migration/Schema';
 
 export class AtlasDatabase {
   static async open(context: common.Context, name: string = 'loci.db'): Promise<relationalStore.RdbStore> {
@@ -13,11 +13,19 @@ export class AtlasDatabase {
       if (store.version > SCHEMA_VERSION) {
         throw new Error('数据来自更高版本，请更新 Loci 后再打开');
       }
-      if (store.version === 0) {
+      if (store.version < SCHEMA_VERSION) {
         const transaction = await store.createTransaction();
         try {
-          for (const sql of SCHEMA_V1) {
-            await transaction.execute(sql);
+          if (store.version === 0) {
+            for (const sql of SCHEMA_V1) { await transaction.execute(sql); }
+          }
+          if (store.version < 2) {
+            const invalid = await transaction.querySql(`SELECT id FROM visits v
+              WHERE NOT EXISTS (SELECT 1 FROM places p WHERE p.id = v.place_id) LIMIT 1`);
+            try {
+              if (invalid.rowCount > 0) { throw new Error('地点与到访数据关联异常，已保留原数据库'); }
+            } finally { invalid.close(); }
+            for (const sql of SCHEMA_V2) { await transaction.execute(sql); }
           }
           await transaction.execute(`PRAGMA user_version = ${SCHEMA_VERSION}`);
           await transaction.commit();

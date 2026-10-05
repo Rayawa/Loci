@@ -1,4 +1,7 @@
+import { contentEnterTransition } from '../../common/motion';
 import { hdsEffect } from '@kit.UIDesignKit';
+import { curves } from '@kit.ArkUI';
+import { pressVisualEffect, pressLightFieldFilter } from '../../common/visualEffects';
 import { Visit } from '../../domain/model/Atlas';
 import { MOOD_NAMES } from './MoodSelector';
 import { Theme } from '../theme/Theme';
@@ -20,12 +23,18 @@ export struct VisitCard {
         }.width('100%')
         Text(this.visit.diary || '还没有写下文字，打开这段记忆继续记录。').fontSize(15).fontColor(Theme.muted)
           .maxLines(4).textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%')
-      }.padding(20).width('100%').alignItems(HorizontalAlign.Start)
-    }.backgroundColor(Theme.surface).borderRadius(22).width('100%')
-      .visualEffect(new hdsEffect.HdsEffectBuilder().pressShadow(this.pressed ?
-        hdsEffect.PressShadowType.BLEND_GRADIENT : hdsEffect.PressShadowType.NONE).buildEffect())
-      .onTouch((event: TouchEvent) => { this.pressed = event.type === TouchType.Down; })
+      }.padding(Theme.pagePadding).width('100%').alignItems(HorizontalAlign.Start)
+    }.backgroundColor(Theme.surface).borderRadius(Theme.cardRadius).width('100%')
+      .scale({ x: this.pressed ? 0.985 : 1, y: this.pressed ? 0.985 : 1 })
+      .animation({ duration: 130, curve: curves.springMotion(0.35, 0.9) })
+      .visualEffect(pressVisualEffect(this.pressed, hdsEffect.PointLightIlluminatedType.BORDER))
+      .compositingFilter(pressLightFieldFilter(this.pressed))
+      .onTouch((event: TouchEvent) => {
+        if (event.type === TouchType.Down) { this.pressed = true; }
+        else if (event.type === TouchType.Up || event.type === TouchType.Cancel) { this.pressed = false; }
+      })
       .accessibilityText(`${this.visit.localDate}的记忆，${MOOD_NAMES[this.visit.mood]}，${this.visit.diary ? '有日记' : '尚无日记'}`)
-      .onClick(() => this.onOpen())
+      .onClick(() => this.onOpen()).transition(contentEnterTransition())
+      .shadow({ radius: 8, color: Theme.shadow, offsetY: 2 })
   }
 }
