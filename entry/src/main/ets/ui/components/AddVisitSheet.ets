@@ -1,4 +1,5 @@
 import { ActionButton } from './ActionButton';
+import { showToastSafely } from '../../common/safeUi';
 import { Place, RecordedVisit, VisitDraft } from '../../domain/model/Atlas';
 import { AtlasViewModel } from '../viewmodel/AtlasViewModel';
 import { MoodSelector } from './MoodSelector';
@@ -20,6 +21,10 @@ export struct AddVisitSheet {
   @Local existingId: string = '';
   @Local saving: boolean = false;
   @Local error: string = '';
+  @Monitor('error')
+  onErrorChanged(): void {
+    if (this.error) { showToastSafely(this.getUIContext().getPromptAction(), this.error); }
+  }
 
   aboutToAppear(): void {
     this.name = this.draft.name;
@@ -49,6 +54,7 @@ export struct AddVisitSheet {
     this.draft.diary = this.diary;
     this.draft.mood = this.mood;
     this.draft.visitedAt = this.visitedAt;
+    this.draft.utcOffsetMinutes = -new Date(this.visitedAt).getTimezoneOffset();
     try {
       this.onSaved(await this.model.save(this.draft));
     } catch (error) {
@@ -90,9 +96,6 @@ export struct AddVisitSheet {
         MoodSelector({ value: this.mood, onSelect: (value: number) => { this.mood = value; this.changed(); } })
         TextArea({ text: this.diary, placeholder: '此刻想记住什么？' }).height(140).maxLength(100000)
           .onChange((value: string) => { this.diary = value; this.changed(); }).id('newDiary').accessibilityText('这次到访的日记')
-        if (this.error) {
-          Text(this.error).fontColor(Theme.ink).fontSize(14)
-        }
         ActionButton({ label: this.saving ? '正在保存…' : '保存这段记忆', highlighted: true,
           available: !this.saving, onAction: () => this.save() }).id('saveVisit')
       }.padding({ left: Theme.pagePadding, right: Theme.pagePadding, top: 20, bottom: 36 }).width('100%').enabled(!this.saving)

@@ -28,6 +28,7 @@ export struct PlaceDetailPage {
     HdsNavDestination() {
       Scroll() {
         Column({ space: 20 }) {
+          Blank().height(100).width('100%')
           if (this.model.loading) {
             StatePanel({ title: '展开地点的记忆', loading: true })
           } else if (this.model.error) {
@@ -41,7 +42,7 @@ export struct PlaceDetailPage {
                 Text(this.model.place.address).fontSize(14).fontColor(Theme.muted)
               }
             }.width('100%').alignItems(HorizontalAlign.Start)
-            MapCanvas({ places: [this.model.place], focus: this.model.place, selectedId: this.placeId })
+            MapCanvas({ places: [this.model.place], focus: this.model.place, selectedId: this.placeId, controlTop: 14 })
               .height(180).clip(true).borderRadius(Theme.cardRadius)
             Row() {
               Column({ space: 6 }) {
@@ -63,11 +64,13 @@ export struct PlaceDetailPage {
                 onOpen: () => this.stack.pushPathByName(Routes.Memory, new EntityRoute(visit.id)) })
             }, (visit: Visit) => visit.id)
           }
+          Blank().height(110).width('100%')
         }.width('100%').padding(Theme.pagePadding)
       }.height('100%').width('100%').backgroundColor(Theme.background)
     }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('地点记忆', this.experience.materialLevel)).onActive(() => this.load())
+      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
       .toolbarConfiguration([{ value: '再次来到这里', symbolIcon: Icons.modifier(Icons.add),
-        status: this.model.place ? ToolbarItemStatus.NORMAL : ToolbarItemStatus.DISABLED,
+        status: this.model.place && !this.atlas.locating && !this.atlas.selectingMap && !this.atlas.showAdd ? ToolbarItemStatus.NORMAL : ToolbarItemStatus.DISABLED,
         action: () => { if (this.model.place) { this.atlas.revisit(this.model.place); } } }])
   }
 }

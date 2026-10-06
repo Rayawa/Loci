@@ -15,6 +15,9 @@ export class Icons {
   static readonly material: Resource = $r('app.media.immersive');
   static readonly light: Resource = $r('app.media.light');
   static readonly marker: Resource = $r('app.media.loci_flag');
+  static readonly user: Resource = $r('app.media.user');
+  static readonly trash: Resource = $r('app.media.trash');
+  static readonly help: Resource = $r('app.media.question');
 
   static modifier(icon: Resource): SymbolGlyphModifier { return new SymbolGlyphModifier(icon); }
 }

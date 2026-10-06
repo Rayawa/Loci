@@ -6,6 +6,7 @@ import { Theme } from '../theme/Theme';
 @ComponentV2
 export struct PlacePreview {
   @Require @Param place: Place;
+  @Param revisitAvailable: boolean = true;
   @Event onOpen: () => void = () => {};
   @Event onRevisit: () => void = () => {};
 
@@ -21,7 +22,7 @@ export struct PlacePreview {
       Row() {
         Text(this.place.lastVisitedAt ? `最近到访 ${new Date(this.place.lastVisitedAt).toLocaleDateString()}` : '还没有到访记录')
           .fontSize(12).fontColor(Theme.muted).layoutWeight(1)
-        ActionButton({ label: '再次来到这里', compact: true, highlighted: true, onAction: () => this.onRevisit() }).width(130)
+        ActionButton({ label: '再次来到这里', compact: true, highlighted: true, available: this.revisitAvailable, onAction: () => this.onRevisit() }).width(130)
       }.width('100%')
     }.padding(Theme.pagePadding).backgroundColor(Theme.surface).borderRadius(Theme.cardRadius).width('100%').shadow({ radius: 8, color: Theme.shadow, offsetY: 2 }).transition(contentEnterTransition())
   }

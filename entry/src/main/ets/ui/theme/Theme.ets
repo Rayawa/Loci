@@ -5,7 +5,6 @@ export class Theme {
   static readonly scrim: Resource = $r('app.color.v3_scrim');
   static readonly cardRadius: number = 16;
   static readonly pagePadding: number = 14;
-  static readonly tabInset: number = 108;
   static readonly background: Resource = $r('app.color.background');
   static readonly surface: Resource = $r('app.color.v3_surface');
   static readonly ink: Resource = $r('app.color.v3_text_primary');

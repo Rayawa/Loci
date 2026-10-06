@@ -88,7 +88,9 @@ export class PlaceMapController {
 
   dispose(): void {
     this.disposed = true;
-    this.markers.forEach((marker: map.Marker) => marker.remove());
+    this.markers.forEach((marker: map.Marker) => {
+      try { marker.remove(); } catch (_) { console.warn('[Loci][PlaceMapController] Native marker cleanup failed'); }
+    });
     this.markers.clear();
     this.identities.clear();
   }

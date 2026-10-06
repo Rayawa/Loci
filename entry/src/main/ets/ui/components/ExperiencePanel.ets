@@ -1,3 +1,9 @@
+import { common } from '@kit.AbilityKit';
+import { getDeviceName } from '../../common/storage';
+import { showToastSafely } from '../../common/safeUi';
+import { clearCompleteCache, getCacheSizeBytes } from '../../common/CacheService';
+import { formatBytes } from '../../common/cacheFormat';
+import { UsernameEditor } from './UsernameEditor';
 import { HdsListItemCard, IconSize, PrefixIcon } from '@kit.UIDesignKit';
 import { ExperienceSettings, ExperienceOption } from '../../service/settings/ExperienceSettings';
 import { vibration } from '../../common/vibration';
@@ -11,6 +17,11 @@ import { Theme } from '../theme/Theme';
 export struct ExperiencePanel {
   @Local experience: ExperienceSettings = ExperienceSettings.shared;
   @Local contentWidth: number = 0;
+  @Local cacheSize: string = '计算中…';
+  @Local handlePopupTrash: boolean = false;
+  private cacheSizeTimer: number = -1;
+  private usernamePrefixItem: PrefixIcon = new PrefixIcon({ iconSize: IconSize.SYSTEM_ICON, iconValue: { image: Icons.user } });
+  private trashPrefixItem: PrefixIcon = new PrefixIcon({ iconSize: IconSize.SYSTEM_ICON, iconValue: { image: Icons.trash } });
   private attemptedUnsupportedHighLight: boolean = false;
   private readonly vibrationSupported: boolean = vibration.isSupported();
   private vibrationPrefixItem: PrefixIcon = new PrefixIcon({ iconSize: IconSize.SYSTEM_ICON, iconValue: { image: Icons.vibration } });
@@ -21,13 +32,16 @@ export struct ExperiencePanel {
   @Builder divider() { Divider().color(Theme.line).strokeWidth(0.5).margin({ left: 16, right: 16 }) }
   build() {
     Column() {
-      if (this.vibrationSupported) { this.vibrationLevelItem(); this.divider() }
-      this.lightFieldLevelItem()
+      this.usernameItem()
       this.divider()
+      if (this.vibrationSupported) { this.vibrationLevelItem(); this.divider() }
       this.materialLevelItem()
+      this.divider()
+      this.trashItem()
     }.width('100%').backgroundColor(Theme.surface).borderRadius(16)
       .shadow({ radius: 8, color: Theme.shadow, offsetY: 2 }).clip(true)
       .enabled(this.experience.ready)
+      .onAppear(() => this.scheduleCacheSizeRefresh())
       .onAreaChange((_old: Area, area: Area) => { this.contentWidth = Number(area.width); })
       .accessibilityText('应用体验设置')
   }
@@ -163,7 +177,7 @@ export struct ExperiencePanel {
     }
 
     private showLightFieldPrompt(message: string): void {
-        try { this.getUIContext().getPromptAction().showToast({ message: message, duration: 4000 }); } catch (_) {}
+        showToastSafely(this.getUIContext().getPromptAction(), message, 4000, 'Settings');
     }
 
     private onLightFieldLevelChange(value: number, mode: SliderChangeMode): void {
@@ -413,4 +427,139 @@ export struct ExperiencePanel {
             )
     }
 
+
+  private persistUsername(username: string): void { this.experience.updateUsername(username); }
+  private scheduleCacheSizeRefresh(): void {
+    if (this.cacheSizeTimer >= 0) { clearTimeout(this.cacheSizeTimer); }
+    this.cacheSizeTimer = setTimeout(() => {
+      this.cacheSizeTimer = -1;
+      this.cacheSize = formatBytes(getCacheSizeBytes(this.getUIContext().getHostContext() as common.UIAbilityContext));
+    }, 0);
+  }
+  aboutToDisappear(): void { if (this.cacheSizeTimer >= 0) { clearTimeout(this.cacheSizeTimer); } }
+  private trash(): void {
+    this.getUIContext().showAlertDialog({ message: '将清除本机临时缓存。地点、记忆、用户名和设置会保留。',
+      primaryButton: { value: '取消', action: () => vibration.dotVibration() },
+      secondaryButton: { value: '继续', action: async () => {
+        vibration.dotVibration();
+        try {
+          await clearCompleteCache(this.getUIContext().getHostContext() as common.UIAbilityContext);
+          showToastSafely(this.getUIContext().getPromptAction(), '缓存已清除', 1800, 'Settings');
+        } catch (_) { showToastSafely(this.getUIContext().getPromptAction(), '部分缓存文件正在使用，请稍后重试', 2190, 'Settings'); }
+        this.scheduleCacheSizeRefresh();
+      } }
+    });
+  }
+    @Builder
+    private usernameItem(): void {
+        HdsListItemCard({
+            prefixItem: this.usernamePrefixItem,
+            textItem: {
+                customBuilder: () => {
+                    this.usernameContent()
+                },
+            },
+            cardHeight: this.isNarrowSettings() ? 108 : 68,
+            cardBackgroundColor: $r('app.color.v3_surface'),
+            cardBorderRadius: 0,
+            hoverBorderRadius: 12,
+            cardPrefixMargin: LIST_ITEM_PREFIX_MARGIN,
+            cardSuffixMargin: LIST_ITEM_SUFFIX_MARGIN,
+            accessibilityOptions: {
+                accessibilityText:
+                `用户名设置，当前${this.experience.username || getDeviceName()}`,
+            },
+        })
+    }
+
+    @Builder
+    private usernameContent(): void {
+        UsernameEditor({
+            initialUsername: this.experience.username,
+            narrow: this.isNarrowSettings(),
+            onCommit: (value: string): void => this.persistUsername(value),
+        })
+    }
+
+    @Builder
+    private trashItem(): void {
+        HdsListItemCard({
+            prefixItem: this.trashPrefixItem,
+            textItem: {
+                customBuilder: () => {
+                    this.trashContent()
+                },
+            },
+            onClick: () => {
+                vibration.dotVibration();
+                this.trash();
+            },
+            cardHeight: 52,
+            cardBackgroundColor: $r('app.color.v3_surface'),
+            cardBorderRadius: 0,
+            hoverBorderRadius: 12,
+            cardPrefixMargin: LIST_ITEM_PREFIX_MARGIN,
+            cardSuffixMargin: LIST_ITEM_SUFFIX_MARGIN,
+            accessibilityOptions: {
+                accessibilityText:
+                `清除缓存，当前缓存文件总大小：${this.cacheSize}`,
+            },
+        })
+    }
+
+    @Builder
+    private trashContent(): void {
+        Flex({
+            justifyContent: FlexAlign.SpaceBetween,
+            alignItems: ItemAlign.Center
+        }) {
+            Text('清除缓存')
+                .fontSize(16)
+                .fontColor($r('app.color.v3_text_primary'))
+                .accessibilityText('清除缓存')
+
+            Row({ space: 8 }) {
+                Text(`缓存文件总大小：${this.cacheSize}`)
+                    .fontSize(13)
+                    .fontColor($r('app.color.v3_text_secondary'))
+                    .accessibilityText(
+                        `缓存文件总大小${this.cacheSize}`
+                    )
+
+                Image(Icons.help)
+                    .height(24)
+                    .width(24)
+                    .objectFit(ImageFit.Contain)
+                    .accessibilityText('查看清除缓存说明')
+                    .clickEffect({
+                        level: ClickEffectLevel.LIGHT,
+                        scale: 0.9
+                    })
+                    .onClick(() => {
+                        if (this.experience.vibrationLevel > 0) {
+                            vibration.dotVibration();
+                        }
+
+                        this.handlePopupTrash =
+                            !this.handlePopupTrash;
+                    })
+                    .monopolizeEvents(true)
+                    .bindPopup(this.handlePopupTrash, {
+                        message:
+                        '清除本机临时缓存；地点、记忆、用户名和设置不会被删除',
+                        onStateChange: (event) => {
+                            if (!event.isVisible) {
+                                this.handlePopupTrash = false;
+                            }
+                        }
+                    })
+            }
+        }
+        .width('100%')
+        .padding({ right: 7 })
+        .accessibilityGroup(true)
+        .accessibilityText(
+            `清除缓存，当前缓存文件总大小${this.cacheSize}`
+        )
+    }
 }

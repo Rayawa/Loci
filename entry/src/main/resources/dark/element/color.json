@@ -51,6 +51,14 @@
     {
       "name": "on_accent",
       "value": "#FF071321"
+    },
+    {
+      "name": "segmented_color_selected",
+      "value": "#22FFFFFF"
+    },
+    {
+      "name": "border",
+      "value": "#2A3B4C"
     }
   ]
 }

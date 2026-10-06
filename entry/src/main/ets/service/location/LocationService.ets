@@ -3,7 +3,12 @@ import { geoLocationManager } from '@kit.LocationKit';
 import { map, mapCommon } from '@kit.MapKit';
 import { CoordinateSystem, VisitDraft, VisitSource } from '../../domain/model/Atlas';
 
-export class LocationService {
+export interface VisitLocationSource {
+  locate(includeAddress?: boolean): Promise<VisitDraft>;
+  select(position: mapCommon.LatLng): Promise<VisitDraft>;
+}
+
+export class LocationService implements VisitLocationSource {
   private context: common.UIAbilityContext;
   constructor(context: common.UIAbilityContext) { this.context = context; }
 

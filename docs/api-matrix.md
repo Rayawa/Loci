@@ -6,6 +6,8 @@
 | --- | --- | --- |
 | HdsNavigation / HdsNavDestination / titleBar / toolbarConfiguration | 18 | 页面返回栈、原生标题与动作工具栏；基线 23 可用 |
 | HdsTabs | 20 | 地图、旅行、足迹一级入口承载；基线 23 可用 |
+| TabSegmentButtonV2 / SegmentButtonV2Items | 18 | 复制 Dashboard 分段控件，固定在 titleBar stackBuilder；基线 23 可用 |
+| ignoreLayoutSafeArea | 12 | 复用 Dashboard 的 Navigation/Destination 沉浸布局与内容留白 |
 | ArkUI V2 ObservedV2 / Trace / ComponentV2 | 12 | UI 状态与纯实体分离；基线 23 可用 |
 | bindSheet / onWillDismiss / DismissSheetAction | 12（拦截关闭） | 录入面板、关闭防丢失、保存时阻止关闭 |
 | UIContext.showAlertDialog | 10 | 使用当前窗口上下文显示原生确认 |
@@ -14,6 +16,8 @@
 | RdbStore.execute | 12 | 带结果的修改与删除 |
 | createTransaction / Transaction.execute / querySql / commit / rollback | 14 | Place + Visit 原子写入与迁移 |
 | MapComponent / getEventManager / marker / rectifyCoordinate | 12 | 地图、事件、旗帜、区域坐标归一；需要 AGC 地图服务 |
+| MapEventManager.mapLoad | 11 | 控制器初始化后等待地图加载完成；15 秒超时提供重试并清理监听 |
+| ohos.permission.GET_NETWORK_INFO / INTERNET | 8 / 9（SDK 权限声明） | Map Kit 网络状态查询与联网；normal 权限，模块声明即可，设备复验待完成 |
 | geoLocationManager.getCurrentLocation / getAddressesFromLocation | 9 | 用户触发单次定位与可失败的逆地理编码 |
 | abilityAccessCtrl.requestPermissionsFromUser | 9 | 按需申请近似与精确定位 |
 | hdsEffect.HdsEffectBuilder.pointLight | 20 | 原样复用 Dashboard 的按压光場与松开恢复 |

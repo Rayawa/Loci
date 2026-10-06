@@ -1,6 +1,8 @@
 import { common } from '@kit.AbilityKit';
 import { HdsNavDestination, HdsNavDestinationTitleMode } from '@kit.UIDesignKit';
 import { cancelStaggerEnterAnimation, pageTransition, startStaggerEnterAnimation } from '../../common/motion';
+import { APP_VERSION, LIST_PAGE_HORIZONTAL_PADDING, LIST_SECTION_SPACING, LIST_SECTION_TITLE_START_PADDING } from '../../common/constants';
+import { showToastSafely } from '../../common/safeUi';
 import { ExperienceSettings } from '../../service/settings/ExperienceSettings';
 import { ExperiencePanel } from '../components/ExperiencePanel';
 import { StatePanel } from '../components/StatePanel';
@@ -16,40 +18,58 @@ export struct SettingsPage {
   private startEnterAnimation(): void {
     cancelStaggerEnterAnimation(this.enterAnimationTimers);
     this.animStep = 0;
-    this.enterAnimationTimers = startStaggerEnterAnimation(this.getUIContext(), 2, (step: number): void => {
+    this.enterAnimationTimers = startStaggerEnterAnimation(this.getUIContext(), 3, (step: number): void => {
       this.animStep = step;
     });
   }
 
-  aboutToDisappear(): void {
-    cancelStaggerEnterAnimation(this.enterAnimationTimers);
-    this.enterAnimationTimers = [];
+  @Monitor('experience.error')
+  onErrorChanged(): void {
+    if (this.experience.error) { showToastSafely(this.getUIContext().getPromptAction(), this.experience.error); }
+  }
+
+  aboutToDisappear(): void { cancelStaggerEnterAnimation(this.enterAnimationTimers); this.enterAnimationTimers = []; }
+
+  @Builder appIdentity() {
+    Column({ space: 8 }) {
+      Image($r('app.media.layered_image')).width(100).height(100).borderRadius(22).margin({ bottom: 10 })
+      Text('Loci').fontSize(30).fontWeight(800).fontColor(Theme.accent).textAlign(TextAlign.Center)
+      Text('个人空间记忆').fontSize(20).fontWeight(600).fontColor(Theme.muted).textAlign(TextAlign.Center)
+    }.width('100%').padding({ top: 18, bottom: 18, left: 12, right: 12 })
+      .opacity(this.animStep >= 1 ? 1 : 0).translate({ y: this.animStep >= 1 ? 0 : 20 })
   }
 
   build() {
     HdsNavDestination() {
       Scroll() {
-        Column({ space: 14 }) {
-          ExperiencePanel().opacity(this.animStep >= 1 ? 1 : 0).translate({ y: this.animStep >= 1 ? 0 : 20 })
-          if (this.experience.error) {
-            if (!this.experience.ready) {
-              StatePanel({ title: '暂时无法读取体验设置', message: this.experience.error, action: '重试',
+        Column({ space: LIST_SECTION_SPACING }) {
+          Blank().height(100).width('100%')
+          this.appIdentity()
+          Divider().color($r('app.color.border'))
+          Column({ space: 8 }) {
+            Text('设置').fontSize(14).fontWeight(FontWeight.Bold).fontColor(Theme.accent)
+              .width('100%').padding({ left: LIST_SECTION_TITLE_START_PADDING })
+            ExperiencePanel()
+            if (!this.experience.ready && this.experience.error) {
+              StatePanel({ title: '暂时无法读取设置', action: '重试',
                 onAction: () => this.experience.initialize(this.getUIContext().getHostContext() as common.UIAbilityContext) })
-            } else { Text(this.experience.error).fontColor(Theme.muted).fontSize(13) }
-          }
-          Column({ space: 14 }) {
-            Text('属于你的个人地图').fontSize(28).fontWeight(FontWeight.Medium).fontColor(Theme.ink)
-            Text('地点、到访和记忆保存在这台设备上。每次到访都是独立的记忆，同一个地点会随着时间积累历史。')
-              .fontSize(16).fontColor(Theme.muted)
-            Text('只有你点击“记录这里”时，Loci 才申请当前位置。你也可以长按地图补记，无需在现场验证。')
-              .fontSize(16).fontColor(Theme.muted)
-            Text('Loci 1.0 · Local Atlas').fontSize(13).fontColor(Theme.muted)
-          }.width('100%').alignItems(HorizontalAlign.Start)
-            .opacity(this.animStep >= 2 ? 1 : 0).translate({ y: this.animStep >= 2 ? 0 : 20 })
-        }.padding(Theme.pagePadding).width('100%').alignItems(HorizontalAlign.Start)
-      }.width('100%').height('100%')
+            }
+          }.width('100%').opacity(this.animStep >= 2 ? 1 : 0).translate({ y: this.animStep >= 2 ? 0 : 20 })
+          Divider().color($r('app.color.border'))
+          Column({ space: 5 }) {
+            Text(`版本 ${APP_VERSION}`).fontSize(12).fontColor(Theme.muted)
+            Text('Designed & Developed by Ray Chen (Rayawa)').fontSize(12).fontColor(Theme.muted).textAlign(TextAlign.Center)
+            Text('Copyright © 2026. All rights reserved.').fontSize(12).fontColor(Theme.muted).textAlign(TextAlign.Center)
+          }.width('100%').padding({ top: 14 }).opacity(this.animStep >= 3 ? 1 : 0)
+            .translate({ y: this.animStep >= 3 ? 0 : 20 })
+          Blank().height(110).width('100%')
+        }.padding({ left: LIST_PAGE_HORIZONTAL_PADDING, right: LIST_PAGE_HORIZONTAL_PADDING })
+          .width('100%').constraintSize({ maxWidth: 1440 })
+      }.width('100%').height('100%').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
     }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition())
       .titleBar(destinationTitle('设置', this.experience.materialLevel)).backgroundColor(Theme.background)
+      .width('100%').height('100%')
+      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
       .onActive(() => this.startEnterAnimation())
   }
 }

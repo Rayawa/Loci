@@ -5,9 +5,9 @@
 | 阶段 | 状态 | 证据 / 剩余工作 |
 | --- | --- | --- |
 | Phase 0 工程与分层 | 已实现 | Stage、API 23–26、domain/data/service/ui/common、构建脚本、签名隐私与 Git 管理 |
-| Phase 0 数据库 | API 26 真机验证通过 | schema v2、UUID、参数化事务、写队列；9 项 Hypium 全部通过 |
-| HDS 导航 | 基础交互验证通过 | HdsTabs 承载三个独立 HdsNav；详情 HdsNavDestination；toolbar；冷启动/三标签/设置/返回通过 |
-| Dashboard 风格统一 | 已接入 | 4 个工具文件逐字节一致；titleBar、悬浮 Tabs、按钮、光场、HDR 降级、动效、语义色、设置卡片与图标，见 dashboard-style.md |
+| Phase 0 数据库 | API 26 真机验证通过 | schema v2、UUID、参数化事务、写队列；9 项数据库 + 3 项 ViewModel 原生测试全部通过 |
+| HDS 导航 | 结构重对齐 / 新布局待真机检查 | 外层 HdsNav 承载 HdsTabs；titleBar 固定 SegmentButton；单一返回栈；旧版冷启动/切页/返回通过，新版待解锁验收 |
+| Dashboard 风格统一 | 继续对齐中 | 6 个工具文件逐字节一致；分段控件、Tabs 材质、titleBar、设置顺序与存储链路直接复用，视觉验收尚未完成，见 dashboard-style.md |
 | 体验设置 | 振动重启恢复通过 | 三档振动/光场/材质与 Preferences；硬朗档重启保留，验收后恢复灵动档；效果感受和其他档位待人工确认 |
 | Phase 1 地图与地点 | 已实现 / 地图服务待确认 | MapComponent、Marker、点击/长按、坐标转换；实际地图加载及 client_id/AGC/签名匹配待确认 |
 | Phase 1 多次 Visit | 数据库逻辑通过 | 重访身份、独立日记/Mood、幂等提交、相邻地点、聚合；地图到录入面板完整交互仍待验收 |
@@ -17,12 +17,38 @@
 | Phase 5 Atlas | 待实施 | 国家/城市/时间轴/统计与世界视图探索 |
 | Phase 6 全面原生打磨 | 待全面验收 | API 23 设备、横屏/平板/大字/无障碍与性能；API 26 新特性需合适场景与兼容路径 |
 
-当前证据：主包与测试包签名构建成功；主机纯规则 8 项通过；API 26 原生数据库测试 `Tests run: 9, Failure: 0, Error: 0, Pass: 9`。日志在本机 `/tmp/loci-build.log`、`/tmp/loci-test-build.log`、`/tmp/loci-rdb-test.log`，临时日志不提交。
+当前证据：主包与测试包签名构建成功；主机纯规则 8 项通过；API 26 原生核心测试 `Tests run: 12, Failure: 0, Error: 0, Pass: 12`。构建日志写入 `/tmp/loci-build.log`、`/tmp/loci-test-build.log`，原生测试曾写入 `/tmp/loci-core-test.log`；这些均为可被清理的临时日志，不提交。
 
 已解决两项阻碍：默认测试入口通过 shell 启动界面时曾被锁屏拒绝；现在使用原生 AbilityDelegator.startAbility 启动轻量 TestAbility，提供真实 Stage 上下文并运行数据库套件。不能在无 Stage 上下文的 TestRunner 中把 getAppContext 直接传给 ArkData。
 
 数据库测试发现事务连接不继承 foreign_keys PRAGMA：v2 用数据库触发器保护关联，迁移保持历史数据与 UUID，已实际验证孤立 Visit 被拒绝、父引用更新被拒绝、删除级联以及重开恢复。
 
-2026-10-06 的启动 JS 崩溃来自 HdsNav 的 BuilderParam 改变 this：页面内容和路由改为箭头闭包保持 AppShell 上下文。修复包已重新安装，冷启动、三个标签页、进入设置、返回和再次冷启动均成功；一级页面为 native mini titleBar 留出 56vp，toolbar 和悬浮 Tabs 不覆盖内容。
+2026-10-06 的启动 JS 崩溃来自 HdsNav 的 BuilderParam 改变 this：页面内容和路由改为箭头闭包保持 AppShell 上下文。此前修复包的冷启动、三个标签页、进入设置、返回和再次冷启动成功。随后根据用户反馈重新对齐 Dashboard 的导航层级与安全区；旧版额外的 56/108vp 外层留白已删除，新版需重新验收。
 
 真实地图服务、定位授权、首次落旗、通过界面保存两次 Visit、强停后旗帜与内容恢复仍是首轮验收剩余项。数据库通过不等于地图和 UI 全闭环通过；首轮完成前不进入 Trip / Track / Atlas 主功能。
+
+本轮首轮闭环修复（2026-10-06）：
+
+- MapCanvas 等待 mapLoad 再落旗/聚焦，显示加载状态；15 秒未完成则提供重试。真机已验证没有加载完成事件时出现超时提示。生命周期清理事件/计时器，重试生成独立 key，旧异步失败不覆盖新地图状态。
+- 异步选点、当前位置和重访互斥；草稿打开后不能被新的选点替换。
+- 新保存地点被城市/年份筛选隐藏时，解除对应浏览筛选并聚焦；保存后的读取失败保留已提交结果，重试后继续聚焦该地点。
+- 补记日期使用该日期的本地 UTC offset，处理历史日期的时区偏移。
+- ViewModel 支持注入 Repository 与位置服务契约，原生测试使用独立随机库与受控位置源，未写入正式 loci.db。三项新回归覆盖并发选点、筛选隐藏补记地点、提交后读失败恢复，已全部通过。
+
+地图仍未达到加载完成状态，当前工程依旧缺少 client_id。已请求该应用的 AGC 配置；在真实地图闭环通过前继续保持完整 v1 目标，未进入媒体/Trip/Track/Atlas 主功能。
+
+继续排查地图（2026-10-06）：
+
+- 正确按 Loci PID 读取日志后，发现网络状态错误 201（Permission denied）与 Map Kit 错误 1002600004（地图服务未开通）。主模块补齐 GET_NETWORK_INFO 权限，AGC 应用配置仍需提供。
+- `hilog -x` 不能与 `-z` 同用。之前这种冲突命令没有读取到日志，不能作为“没有 JS 错误”的证据；已修正验收方法。
+- 地图重试时先使旧回调失效，解绑事件与移除旗帜分别捕获原生异常并继续清理。此项属于防护改动；此前重试后进程消失的具体原因尚未取得可靠堆栈，不能宣称已经解决。
+- 权限与重试防护包已安装：当前进程 21412 的冷启动日志没有再出现网络状态错误 201；地图重试后同一进程仍持续运行，未看到 JS 退出堆栈。单次失败服务下重试不能证明正常联网地图通过；错误 1002600004 仍在。
+
+Dashboard 结构再对齐（2026-10-06，按用户新的明确要求）：
+
+- HdsNav 外层统一承载 Tabs；固定 titleBar stackBuilder 中的 SegmentButton，不放入 Scroll。地图/地点切换保留同一地图实例，其他入口保留各自分段状态。
+- 去掉 TabContent 底部 padding 和内层导航顶部 padding，采用参考工程的 ignoreLayoutSafeArea；列表使用参考页面首尾留白，地图浮层单独避让 Tabs。
+- Toast 使用原样复制的 safeUi；保存反馈、地图异常、编辑错误与设置错误改走 Toast，地图仅保留重试动作。隐藏的地图不在其他页面弹错误提示。
+- 设置按参考工程当前显示顺序：用户名、振动、材质、缓存。光场方法与工具保留，滑杆和参考工程一样不显示。设置页按图标名称、设置组、版本信息排序；缓存只清理 cacheDir，保留地点、记忆与偏好。
+- DiskStorage 与 safeUi 逐字节一致；storage 复制后补充 loci-experience 迁移与 Loci 版本，EntryAbility 在加载 UI 前水合。新增两个独立 Preferences 回归测试，14 项原生套件已构建，新增测试尚未真机运行。
+- 新布局包已安装，但冷启动被锁屏错误 10106102 拒绝。已请求解锁；位置、滚动、返回、偏好迁移与重启恢复仍待检查。当前不能宣称完成 1:1 视觉验收。

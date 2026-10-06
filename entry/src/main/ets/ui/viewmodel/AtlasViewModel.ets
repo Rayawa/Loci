@@ -6,7 +6,7 @@ import { Place, RecordedVisit, VisitDraft, VisitSource } from '../../domain/mode
 import { AtlasRepository } from '../../domain/repository/AtlasRepository';
 import { distanceMeters } from '../../domain/service/VisitRules';
 import { Haptics } from '../../service/haptics/Haptics';
-import { LocationService } from '../../service/location/LocationService';
+import { LocationService, VisitLocationSource } from '../../service/location/LocationService';
 
 @ObservedV2
 export class AtlasViewModel {
@@ -15,6 +15,7 @@ export class AtlasViewModel {
   @Trace ready: boolean = false;
   @Trace error: string = '';
   @Trace locating: boolean = false;
+  @Trace selectingMap: boolean = false;
   @Trace selectedPlaceId: string = '';
   @Trace city: string = '';
   @Trace year: string = '';
@@ -23,14 +24,20 @@ export class AtlasViewModel {
   @Trace showAdd: boolean = false;
   @Trace notice: string = '';
   private repository?: AtlasRepository;
-  private location?: LocationService;
+  private location?: VisitLocationSource;
+  private pendingRevealId: string = '';
+
+  constructor(repository?: AtlasRepository, location?: VisitLocationSource) {
+    this.repository = repository;
+    this.location = location;
+  }
 
   async initialize(context: common.UIAbilityContext): Promise<void> {
     this.loading = true;
     this.error = '';
     try {
-      this.repository = await AppDependencies.repository(context);
-      this.location = new LocationService(context);
+      this.repository = this.repository ?? await AppDependencies.repository(context);
+      this.location = this.location ?? new LocationService(context);
       await this.refresh();
       this.ready = true;
     } catch (error) {
@@ -50,6 +57,12 @@ export class AtlasViewModel {
   async refresh(): Promise<void> {
     const places = await this.getRepository().listPlaces();
     this.places = places;
+    const reveal = places.find((place: Place) => place.id === this.pendingRevealId);
+    if (reveal) {
+      if (!this.filteredPlaces().some((place: Place) => place.id === reveal.id)) { this.clearFilters(); }
+      this.focus = reveal;
+      this.pendingRevealId = '';
+    }
   }
 
   async retryPlaces(): Promise<void> {
@@ -92,7 +105,7 @@ export class AtlasViewModel {
   }
 
   async recordHere(): Promise<void> {
-    if (this.locating || !this.location) {
+    if (this.locating || this.selectingMap || this.showAdd || !this.ready || !this.location) {
       return;
     }
     this.locating = true;
@@ -107,7 +120,7 @@ export class AtlasViewModel {
   }
 
   async locateOnMap(): Promise<void> {
-    if (this.locating || !this.location) {
+    if (this.locating || this.selectingMap || this.showAdd || !this.ready || !this.location) {
       return;
     }
     this.locating = true;
@@ -127,17 +140,21 @@ export class AtlasViewModel {
   }
 
   async selectMap(position: mapCommon.LatLng): Promise<void> {
-    if (!this.location || this.showAdd || this.locating) {
+    if (!this.location || !this.ready || this.loading || this.showAdd || this.locating || this.selectingMap) {
       return;
     }
+    this.selectingMap = true;
     try {
       this.begin(await this.location.select(position));
     } catch (error) {
       this.error = (error as Error).message || '选点失败，请重试';
+    } finally {
+      this.selectingMap = false;
     }
   }
 
   revisit(place: Place): void {
+    if (!this.ready || this.showAdd || this.locating || this.selectingMap) { return; }
     const draft = new VisitDraft();
     draft.existingPlaceId = place.id;
     draft.name = place.name;
@@ -152,11 +169,11 @@ export class AtlasViewModel {
     const result = await this.getRepository().recordVisit(draft);
     this.showAdd = false;
     this.selectedPlaceId = result.placeId;
+    this.pendingRevealId = result.placeId;
     this.notice = result.isNewPlace ? '一个地点，一段新的记忆' : '再次来到这里，留下新的记忆';
     // A refresh failure is a read failure after a successful commit, never a failed write.
     try {
       await this.refresh();
-      this.focus = this.selectedPlace();
     } catch (_) {
       this.error = '记忆已保存，地点列表暂未更新，请刷新';
     }

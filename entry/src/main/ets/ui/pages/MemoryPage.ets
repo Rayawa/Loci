@@ -8,6 +8,7 @@ import { StatePanel } from '../components/StatePanel';
 import { Theme } from '../theme/Theme';
 import { AtlasViewModel } from '../viewmodel/AtlasViewModel';
 import { MemoryViewModel } from '../viewmodel/MemoryViewModel';
+import { showToastSafely } from '../../common/safeUi';
 
 @ComponentV2
 export struct MemoryPage {
@@ -16,6 +17,12 @@ export struct MemoryPage {
   @Require @Param visitId: string;
   @Require @Param stack: NavPathStack;
   @Local model: MemoryViewModel = new MemoryViewModel();
+
+  @Monitor('model.error', 'model.notice')
+  onUserMessage(): void {
+    const message = this.model.error || this.model.notice;
+    if (message) { showToastSafely(this.getUIContext().getPromptAction(), message); }
+  }
 
   aboutToAppear(): void {
     this.model.load(this.atlas.getRepository(), this.visitId);
@@ -40,6 +47,7 @@ export struct MemoryPage {
     HdsNavDestination() {
       Scroll() {
         Column({ space: 24 }) {
+          Blank().height(100).width('100%')
           if (this.model.loading) {
             StatePanel({ title: '打开这段记忆', loading: true })
           } else if (!this.model.visit) {
@@ -52,14 +60,13 @@ export struct MemoryPage {
             TextArea({ text: this.model.diary, placeholder: '写下想要留下的片段…' }).height(320).maxLength(100000)
               .onChange((value: string) => { this.model.diary = value; this.model.notice = ''; })
               .enabled(!this.model.saving).id('memoryDiary').accessibilityText('日记正文')
-            if (this.model.error || this.model.notice) {
-              Text(this.model.error || this.model.notice).fontColor(Theme.ink).fontSize(14)
-            }
 
           }
+          Blank().height(110).width('100%')
         }.padding(Theme.pagePadding).width('100%')
       }.height('100%').width('100%').backgroundColor(Theme.background)
     }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('这一段记忆', this.experience.materialLevel)).onBackPressed(() => this.onBack())
+      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
       .toolbarConfiguration([{ value: this.model.saving ? '正在保存…' : '保存记忆',
         symbolIcon: Icons.modifier(Icons.save),
         status: this.model.saving || this.model.loading || !this.model.visit || !this.model.dirty() ? ToolbarItemStatus.DISABLED : ToolbarItemStatus.NORMAL,

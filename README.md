@@ -36,7 +36,7 @@ sh scripts/build.sh test
 
 ## 验证与项目管理
 
-设备 Hypium 测试：`entry/src/ohosTest/ets/test/AtlasPersistence.test.ets`，独立随机命名测试库，不操作正式 `loci.db`。通过 DevEco 测试运行器执行，或使用显式设备标识：
+设备 Hypium 测试：`entry/src/ohosTest/ets/test/List.test.ets` 汇总数据库与 ViewModel 两个套件，独立随机命名测试库，不操作正式 `loci.db`。通过 DevEco 测试运行器执行，或使用显式设备标识：
 
 ```sh
 hdc list targets
@@ -44,7 +44,7 @@ hdc -t DEVICE_ID install -r entry/build/default/outputs/ohosTest/entry-ohosTest-
 hdc -t DEVICE_ID shell aa test -b top.rayawa.loci -m entry_test -s unittest OpenHarmonyTestRunner -w 45
 ```
 
-测试入口通过原生 TestAbility 提供真实 Stage 上下文，直接运行数据库套件，不创建测试窗口。检查测试结果与断言数量，不能只根据 shell 退出码判断。真机交互验收见 [验收清单](docs/validation/core-checklist.md)。
+测试入口通过原生 TestAbility 提供真实 Stage 上下文，运行数据库、ViewModel 和 DiskStorage 三个套件，不创建测试窗口。检查测试结果与断言数量，不能只根据 shell 退出码判断。真机交互验收见 [验收清单](docs/validation/core-checklist.md)。
 
 - [实施方案](docs/implementation-plan.md)：首轮范围、数据与阶段顺序。
 - [进度](docs/progress.md)：已实现、已验证及外部依赖。

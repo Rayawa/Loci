@@ -1,6 +1,7 @@
 import { common } from '@kit.AbilityKit';
-import { preferences } from '@kit.ArkData';
 import { deviceInfo } from '@kit.BasicServicesKit';
+import { initializeSettings, getAllSettings, getUsername, setUsername, setVibrationLevel, setLightFieldLevel,
+  setImmersiveMaterialLevel } from '../../common/storage';
 
 export enum ExperienceOption {
   Vibration = 'vibrationLevel', LightField = 'lightFieldLevel', Material = 'immersiveMaterialLevel'
@@ -12,9 +13,9 @@ export class ExperienceSettings {
   @Trace vibrationLevel: number = 1;
   @Trace lightFieldLevel: number = 1;
   @Trace materialLevel: number = 1;
+  @Trace username: string = '';
   @Trace ready: boolean = false;
   @Trace error: string = '';
-  private store?: preferences.Preferences;
   private opening?: Promise<void>;
   private writes: Promise<void> = Promise.resolve();
 
@@ -25,10 +26,12 @@ export class ExperienceSettings {
 
   private async open(context: common.Context): Promise<void> {
     try {
-      this.store = await preferences.getPreferences(context, 'loci-experience');
-      this.vibrationLevel = this.level(await this.store.get(ExperienceOption.Vibration, 1));
-      this.lightFieldLevel = this.level(await this.store.get(ExperienceOption.LightField, 1));
-      this.materialLevel = this.level(await this.store.get(ExperienceOption.Material, 1));
+      initializeSettings(context);
+      const settings = await getAllSettings();
+      this.vibrationLevel = settings.vibrationLevel;
+      this.lightFieldLevel = settings.lightFieldLevel;
+      this.materialLevel = settings.immersiveMaterialLevel;
+      this.username = await getUsername();
       AppStorage.setOrCreate(ExperienceOption.Vibration, this.vibrationLevel);
       AppStorage.setOrCreate(ExperienceOption.LightField, this.lightFieldLevel);
       AppStorage.setOrCreate(ExperienceOption.Material, this.materialLevel);
@@ -40,11 +43,16 @@ export class ExperienceSettings {
     }
   }
 
-  private level(value: preferences.ValueType): number {
-    return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 2 ? value : 1;
-  }
-
   static supportsHdr(): boolean { return deviceInfo.sdkApiVersion >= 24; }
+
+  updateUsername(value: string): void {
+    if (!this.ready) { return; }
+    const captured = value.trim();
+    this.username = captured;
+    this.writes = this.writes.then(() => setUsername(captured)).catch(() => {
+      this.error = '暂时无法保存用户名，请重试';
+    });
+  }
 
   update(option: ExperienceOption, value: number): void {
     if (!this.ready || !Number.isInteger(value) || value < 0 || value > 2) { return; }
@@ -52,12 +60,11 @@ export class ExperienceSettings {
     if (option === ExperienceOption.Vibration) { this.vibrationLevel = value; }
     else if (option === ExperienceOption.LightField) { this.lightFieldLevel = value; }
     else { this.materialLevel = value; }
-    AppStorage.setOrCreate(option, value);
     const captured = value;
     this.writes = this.writes.then(async () => {
-      if (!this.store) { throw new Error('设置未就绪'); }
-      await this.store.put(option, captured);
-      await this.store.flush();
+      if (option === ExperienceOption.Vibration) { await setVibrationLevel(captured); }
+      else if (option === ExperienceOption.LightField) { await setLightFieldLevel(captured); }
+      else { await setImmersiveMaterialLevel(captured); }
       this.error = '';
     }).catch(() => { this.error = '本次设置已应用，但暂时无法保存，重启后可能恢复原值'; });
   }
