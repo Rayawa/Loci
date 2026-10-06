@@ -29,12 +29,13 @@ export struct ExperiencePanel {
   private lightFieldPrefixItem: PrefixIcon = new PrefixIcon({ iconSize: IconSize.SYSTEM_ICON, iconValue: { image: Icons.light } });
   private isNarrowSettings(): boolean { return this.contentWidth > 0 && this.contentWidth < 330; }
 
-  @Builder divider() { Divider().color(Theme.line).strokeWidth(0.5).margin({ left: 16, right: 16 }) }
+  @Builder divider() { Divider().color($r('app.color.border')).strokeWidth(0.5).margin({ left: 16, right: 16 }) }
   build() {
     Column() {
       this.usernameItem()
       this.divider()
       if (this.vibrationSupported) { this.vibrationLevelItem(); this.divider() }
+      this.divider()
       this.materialLevelItem()
       this.divider()
       this.trashItem()

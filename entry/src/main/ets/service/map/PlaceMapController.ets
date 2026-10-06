@@ -2,12 +2,14 @@ import { Icons } from '../../common/icons';
 import { common } from '@kit.AbilityKit';
 import { map, mapCommon } from '@kit.MapKit';
 import { CoordinateSystem, Place } from '../../domain/model/Atlas';
+import { CONTENT_ENTER_DURATION_MS } from '../../common/constants';
 
 export class PlaceMapController {
   private markers: Map<string, map.Marker> = new Map();
   private identities: Map<string, string> = new Map();
   private queue: Promise<void> = Promise.resolve();
   private disposed: boolean = false;
+  private revealed: Set<string> = new Set();
 
   private controller: map.MapComponentController;
   private context: common.UIAbilityContext;
@@ -19,7 +21,7 @@ export class PlaceMapController {
     return this.identities.get(marker.getId()) ?? '';
   }
 
-  sync(places: Place[], selectedId: string): Promise<void> {
+  sync(places: Place[], selectedId: string, revealId: string = ''): Promise<void> {
     this.queue = this.queue.catch(() => {}).then(async () => {
       if (this.disposed) {
         return;
@@ -53,6 +55,7 @@ export class PlaceMapController {
             title: place.name,
             snippet: `来到这里 ${place.visitCount} 次`,
             clickable: true,
+            visible: place.id !== revealId,
             icon: Icons.marker,
             anchorU: 0.22, anchorV: 1
           });
@@ -63,9 +66,11 @@ export class PlaceMapController {
           this.markers.set(place.id, marker);
           this.identities.set(marker.getId(), place.id);
         }
+        const visible = place.id !== revealId || this.revealed.has(place.id);
+        marker.setVisible(visible);
         marker.setSnippet(`来到这里 ${place.visitCount} 次${place.id === selectedId ? ' · 已选择' : ''}`);
         marker.setZIndex(place.id === selectedId ? 10 : 1);
-        if (place.id === selectedId) {
+        if (visible && place.id === selectedId) {
           marker.setInfoWindowVisible(true);
         } else {
           marker.setInfoWindowVisible(false);
@@ -82,8 +87,26 @@ export class PlaceMapController {
       location: { latitude: place.latitude, longitude: place.longitude }
     }]);
     if (!this.disposed && positions.length === 1) {
-      this.controller.animateCamera(map.newLatLng(positions[0].location, 15), 500);
+      await this.controller.animateCameraStatus(map.newLatLng(positions[0].location, 15), 500);
     }
+  }
+
+  reveal(id: string): boolean {
+    const marker = this.markers.get(id);
+    if (this.disposed || !marker) { return false; }
+    marker.setVisible(true);
+    if (!this.revealed.has(id)) {
+      try {
+        const animation = new map.AlphaAnimation(0.2, 1);
+        animation.setDuration(CONTENT_ENTER_DURATION_MS);
+        animation.setFillMode(map.AnimationFillMode.FORWARDS);
+        animation.setRepeatCount(0);
+        marker.setAnimation(animation);
+        marker.startAnimation();
+      } catch (_) { console.warn('[Loci][PlaceMapController] Flag animation unavailable; marker remains visible'); }
+      this.revealed.add(id);
+    }
+    return true;
   }
 
   dispose(): void {
@@ -93,5 +116,6 @@ export class PlaceMapController {
     });
     this.markers.clear();
     this.identities.clear();
+    this.revealed.clear();
   }
 }

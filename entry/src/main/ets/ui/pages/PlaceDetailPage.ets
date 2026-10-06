@@ -19,6 +19,7 @@ export struct PlaceDetailPage {
   @Require @Param placeId: string;
   @Require @Param stack: NavPathStack;
   @Local model: PlaceHistoryViewModel = new PlaceHistoryViewModel();
+  @Local activeMap: boolean = false;
 
   private load(): void {
     this.model.load(this.atlas.getRepository(), this.placeId);
@@ -42,7 +43,7 @@ export struct PlaceDetailPage {
                 Text(this.model.place.address).fontSize(14).fontColor(Theme.muted)
               }
             }.width('100%').alignItems(HorizontalAlign.Start)
-            MapCanvas({ places: [this.model.place], focus: this.model.place, selectedId: this.placeId, controlTop: 14 })
+            MapCanvas({ places: [this.model.place], focus: this.model.place, selectedId: this.placeId, controlTop: 14, presenting: this.activeMap })
               .height(180).clip(true).borderRadius(Theme.cardRadius)
             Row() {
               Column({ space: 6 }) {
@@ -67,7 +68,8 @@ export struct PlaceDetailPage {
           Blank().height(110).width('100%')
         }.width('100%').padding(Theme.pagePadding)
       }.height('100%').width('100%').backgroundColor(Theme.background)
-    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('地点记忆', this.experience.materialLevel)).onActive(() => this.load())
+    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('地点记忆', this.experience.materialLevel))
+      .onActive(() => { this.activeMap = true; this.load(); }).onInactive(() => { this.activeMap = false; })
       .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
       .toolbarConfiguration([{ value: '再次来到这里', symbolIcon: Icons.modifier(Icons.add),
         status: this.model.place && !this.atlas.locating && !this.atlas.selectingMap && !this.atlas.showAdd ? ToolbarItemStatus.NORMAL : ToolbarItemStatus.DISABLED,

@@ -14,6 +14,8 @@ export struct MapCanvas {
   @Param focus: Place | undefined = undefined;
   @Param controlTop: number = 112;
   @Param presenting: boolean = true;
+  @Param revealId: string = '';
+  @Event onReveal: (id: string) => void = () => {};
   @Event onSelect: (id: string) => void = () => {};
   @Event onLongPress: (coordinate: mapCommon.LatLng) => void = () => {};
   @Local error: string = '';
@@ -24,18 +26,19 @@ export struct MapCanvas {
   private loadHandler?: () => void;
   private loadTimer: number = -1;
   private active: boolean = true;
+  private revealingId: string = '';
   private options: mapCommon.MapOptions = {
     position: { target: { latitude: 39.925, longitude: 116.397 }, zoom: 11 },
     zoomControlsEnabled: false,
     dayNightMode: mapCommon.DayNightMode.AUTO
   };
   private markerClick: (marker: map.Marker) => void = (marker: map.Marker) => {
-    if (!this.loaded) { return; }
+    if (!this.active || !this.loaded || !this.presenting) { return; }
     const id = this.mapController?.placeId(marker) ?? '';
     if (id) { this.onSelect(id); }
   };
   private longClick: (position: mapCommon.LatLng) => void = (position: mapCommon.LatLng) => {
-    if (this.loaded) { this.onLongPress(position); }
+    if (this.active && this.loaded && this.presenting) { this.onLongPress(position); }
   };
 
   private clearLoadTimer(): void {
@@ -76,7 +79,7 @@ export struct MapCanvas {
           // Region routing and coordinate rectification must be ready before placing flags.
           this.sync();
           const focus = this.focus ?? this.places[0];
-          if (focus) { this.focusMap(focus); }
+          if (focus && (!this.revealId || focus.id !== this.revealId)) { this.focusMap(focus); }
         };
         this.events.on('mapLoad', this.loadHandler);
         this.events.on('markerClick', this.markerClick);
@@ -96,20 +99,35 @@ export struct MapCanvas {
     });
   }
 
-  @Monitor('places', 'selectedId')
+  @Monitor('places', 'selectedId', 'revealId', 'presenting')
   onPlacesChanged(): void { this.sync(); }
 
   @Monitor('focus')
   onFocusChanged(): void {
-    if (this.focus) { this.focusMap(this.focus); }
+    if (this.focus && (!this.revealId || this.focus.id !== this.revealId)) { this.focusMap(this.focus); }
   }
 
   private sync(): void {
     if (!this.loaded) { return; }
     const key = this.retryKey;
-    this.mapController?.sync(this.places, this.selectedId).catch(() => {
+    this.mapController?.sync(this.places, this.selectedId, this.revealId).then(() => this.revealSavedPlace(key)).catch(() => {
       if (this.active && key === this.retryKey) { this.error = '地点标记暂未更新，请重试'; }
     });
+  }
+
+  private async revealSavedPlace(key: number): Promise<void> {
+    const id = this.revealId;
+    const controller = this.mapController;
+    const place = this.places.find((item: Place) => item.id === id);
+    if (!this.active || key !== this.retryKey || !this.presenting || !this.loaded || !id || !place || !controller || this.revealingId === id) { return; }
+    this.revealingId = id;
+    try {
+      await controller.focus(place);
+      if (!this.active || !this.presenting || key !== this.retryKey || controller !== this.mapController || id !== this.revealId) { return; }
+      if (controller.reveal(id)) { this.onReveal(id); }
+    } finally {
+      if (key === this.retryKey && this.revealingId === id) { this.revealingId = ''; }
+    }
   }
 
   private release(): void {
@@ -121,6 +139,7 @@ export struct MapCanvas {
     this.events = undefined;
     this.mapController = undefined;
     this.loaded = false;
+    this.revealingId = '';
     // A failed native map may already be destroyed. One failed cleanup must not interrupt the others.
     const cleanup: Array<() => void> = [
       () => { if (loadHandler) { events?.off('mapLoad', loadHandler); } },

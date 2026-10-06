@@ -82,7 +82,10 @@ export struct AppShell {
       AddVisitSheet({ model: this.model, draft: this.model.draft,
         onEditingState: (dirty: boolean, saving: boolean) => { this.draftDirty = dirty; this.draftSaving = saving; },
         onSaved: (record: RecordedVisit) => {
-          this.pageStack.pushPathByName(Routes.Memory, new EntityRoute(record.visitId));
+          if (record.isNewPlace) {
+            this.mapViews = [0];
+            if (this.activeTab !== 0) { this.tabsController.changeIndex(0); }
+          } else { this.pageStack.pushPathByName(Routes.Memory, new EntityRoute(record.visitId)); }
         } })
     }
   }
@@ -110,7 +113,7 @@ export struct AppShell {
     if (!this.model.loading && !this.model.ready && this.model.error) {
       StatePanel({ title: '暂时无法打开足迹', message: this.model.error, action: '重试',
         onAction: () => this.model.initialize(this.getUIContext().getHostContext() as common.UIAbilityContext) })
-    } else { MapPage({ model: this.model, stack: this.pageStack, viewIndex: this.mapViews[0], active: this.activeTab === 0 && this.rootVisible }) }
+    } else { MapPage({ model: this.model, stack: this.pageStack, viewIndex: this.mapViews[0], active: this.activeTab === 0 && this.rootVisible && !this.sheetVisible }) }
   }
   @Builder tripsContent() {
     StatePanel({ title: this.tripsViews[0] === 0 ? '旅行记忆尚未开放' : '轨迹记录尚未开放', message: '你的地点记忆，会成为每一段旅程的起点。' }).margin({ top: 110, left: 14, right: 14 })

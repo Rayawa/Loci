@@ -5,10 +5,10 @@
 | 阶段 | 状态 | 证据 / 剩余工作 |
 | --- | --- | --- |
 | Phase 0 工程与分层 | 已实现 | Stage、API 23–26、domain/data/service/ui/common、构建脚本、签名隐私与 Git 管理 |
-| Phase 0 数据库 | API 26 真机验证通过 | schema v2、UUID、参数化事务、写队列；9 项数据库 + 3 项 ViewModel 原生测试全部通过 |
-| HDS 导航 | 结构重对齐 / 新布局待真机检查 | 外层 HdsNav 承载 HdsTabs；titleBar 固定 SegmentButton；单一返回栈；旧版冷启动/切页/返回通过，新版待解锁验收 |
+| Phase 0 数据库与状态 | API 26 真机验证通过 | schema v2、UUID、参数化事务、写队列；9 数据库 + 4 ViewModel + 2 DiskStorage 原生测试全部通过 |
+| HDS 导航 | API 26 新布局基础验收通过 | 三标签/全部分段/设置/返回/冷启动已运行；标题栏与 Tabs 坐标固定，菜单重叠已修复；其他尺寸与大字仍待验收 |
 | Dashboard 风格统一 | 继续对齐中 | 6 个工具文件逐字节一致；分段控件、Tabs 材质、titleBar、设置顺序与存储链路直接复用，视觉验收尚未完成，见 dashboard-style.md |
-| 体验设置 | 振动重启恢复通过 | 三档振动/光场/材质与 Preferences；硬朗档重启保留，验收后恢复灵动档；效果感受和其他档位待人工确认 |
+| 体验设置 | 新存储链路 UI 重启恢复通过 | 新版硬朗档强停重启保留，验收后恢复灵动档；用户名/振动/材质/缓存顺序已检查；旧偏好非默认值迁移及效果感受待确认 |
 | Phase 1 地图与地点 | 已实现 / 地图服务待确认 | MapComponent、Marker、点击/长按、坐标转换；实际地图加载及 client_id/AGC/签名匹配待确认 |
 | Phase 1 多次 Visit | 数据库逻辑通过 | 重访身份、独立日记/Mood、幂等提交、相邻地点、聚合；地图到录入面板完整交互仍待验收 |
 | Phase 2 媒体 | 待实施 | 闭环通过后加入照片/视频/录音与 URI 生命周期 |
@@ -17,7 +17,7 @@
 | Phase 5 Atlas | 待实施 | 国家/城市/时间轴/统计与世界视图探索 |
 | Phase 6 全面原生打磨 | 待全面验收 | API 23 设备、横屏/平板/大字/无障碍与性能；API 26 新特性需合适场景与兼容路径 |
 
-当前证据：主包与测试包签名构建成功；主机纯规则 8 项通过；API 26 原生核心测试 `Tests run: 12, Failure: 0, Error: 0, Pass: 12`。构建日志写入 `/tmp/loci-build.log`、`/tmp/loci-test-build.log`，原生测试曾写入 `/tmp/loci-core-test.log`；这些均为可被清理的临时日志，不提交。
+当前证据：主包与测试包签名构建成功；主机纯规则 8 项通过；API 26 原生核心测试 `Tests run: 15, Failure: 0, Error: 0, Pass: 15`。构建日志写入 `/tmp/loci-build.log`、`/tmp/loci-test-build.log`，原生测试写入 `/tmp/loci-core-test.log`；这些均为可被清理的临时日志，不提交。
 
 已解决两项阻碍：默认测试入口通过 shell 启动界面时曾被锁屏拒绝；现在使用原生 AbilityDelegator.startAbility 启动轻量 TestAbility，提供真实 Stage 上下文并运行数据库套件。不能在无 Stage 上下文的 TestRunner 中把 getAppContext 直接传给 ArkData。
 
@@ -50,5 +50,23 @@ Dashboard 结构再对齐（2026-10-06，按用户新的明确要求）：
 - 去掉 TabContent 底部 padding 和内层导航顶部 padding，采用参考工程的 ignoreLayoutSafeArea；列表使用参考页面首尾留白，地图浮层单独避让 Tabs。
 - Toast 使用原样复制的 safeUi；保存反馈、地图异常、编辑错误与设置错误改走 Toast，地图仅保留重试动作。隐藏的地图不在其他页面弹错误提示。
 - 设置按参考工程当前显示顺序：用户名、振动、材质、缓存。光场方法与工具保留，滑杆和参考工程一样不显示。设置页按图标名称、设置组、版本信息排序；缓存只清理 cacheDir，保留地点、记忆与偏好。
-- DiskStorage 与 safeUi 逐字节一致；storage 复制后补充 loci-experience 迁移与 Loci 版本，EntryAbility 在加载 UI 前水合。新增两个独立 Preferences 回归测试，14 项原生套件已构建，新增测试尚未真机运行。
+- DiskStorage 与 safeUi 逐字节一致；storage 复制后补充 loci-experience 迁移与 Loci 版本，EntryAbility 在加载 UI 前水合。两个独立 Preferences 回归后来已通过；当前原生套件扩为 15 项并全部通过。
 - 新布局包已安装，但冷启动被锁屏错误 10106102 拒绝。已请求解锁；位置、滚动、返回、偏好迁移与重启恢复仍待检查。当前不能宣称完成 1:1 视觉验收。
+
+首次地点交互衔接（2026-10-06）：
+
+- 原先首次保存立即跳入 Memory，缺少观察地图落旗的过程。本轮首次创建保留在地图，显示地点预览与“继续写记忆”；重访仍直接进入本次 Memory。
+- 新旗帜先隐藏，等待官方 animateCameraStatus 聚焦完成后显示，AlphaAnimation 使用 Dashboard 的 280ms 入场时长。动画能力失败时保留可见旗帜；已保存数据不回滚。
+- 解锁身份属于会话 UI 状态，正式数据库不存动画状态；匹配旗帜真正显示后消费一次并反馈触感。重访和重启恢复不重新请求解锁。
+- 原生 ViewModel 新回归检查首次身份、错误旗帜不会消费、消费后重访保持 Place、新 Visit 独立、重开 ViewModel 不重播。15 项原生套件现已全部通过（9 数据库、4 ViewModel、2 DiskStorage）；完整结果为 Failure 0 / Error 0 / Pass 15。
+- 地图非当前页面、录入/筛选 Sheet 打开、地点详情退到后台时，跳过地图 Toast 与选点回调；旧重试世代不启动或结束新世代的解锁聚焦。
+- 本轮再次启动真机仍被锁屏拒绝。真实地图及新布局检查继续等待解锁与 Loci 的 Map Kit 应用配置，目标未完成。
+- 标准无窗口原生测试入口能在当前设备状态下完成数据库/状态/Preferences 验证；此证据不代表 EntryAbility 界面能启动，也不代表旗帜动画或 Map Kit 服务通过。
+
+API 26 新布局真机验收（2026-10-06，设备已恢复可启动）：
+
+- 发现地图页四个 titleBar menu 动作遮住居中 Segment。HDS menu.maxCount 改为 1，由原生更多菜单收纳记录/定位/筛选/设置；一项设置入口保持单按钮，与 Dashboard 分段标题栏相同占位。修复签名包构建和安装通过。
+- 三标签与地图/地点、旅程/轨迹、城市/国家/时间全部切换成功；同一设备布局中 Segment 外框固定为 [304,134][912,264]，主 Tabs 外框固定为 [201,2415][1014,2597]。坐标单位为该设备实际 px，不是适配代码中的常量。
+- 设置进入后主 Tabs 与主 Segment 隐藏；设置标题栏 [0,107][1216,289] 在滚动前后保持位置，页面内容可滚动；返回恢复根导航原坐标。用户名、振动、材质、缓存、版本信息顺序确认。
+- UI 切换振动 1→2，强停后再次启动显示 2；随后恢复 1。验证的是新 app_storage 链路，不代表旧库非默认偏好迁移已经人工验证。
+- 地图原生更多菜单与筛选 Sheet 打开、关闭、返回成功。鉴权失败下再次重试，超过 30 秒后仍保持 own-PID 54193，未出现原启动 BuilderParam JS 堆栈；1002600004 与原生地图资源/样式错误仍在。地图服务未配置，不能把这些导航证据写成真实地图闭环或完整 1:1 视觉验收通过。

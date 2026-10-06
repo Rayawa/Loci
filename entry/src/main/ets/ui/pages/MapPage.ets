@@ -17,7 +17,9 @@ export struct MapPage {
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
       MapCanvas({ places: this.model.filteredPlaces(), selectedId: this.model.selectedPlaceId, focus: this.model.focus,
+        revealId: this.model.unlockPlaceId,
         presenting: this.active && this.viewIndex === 0,
+        onReveal: (id: string) => this.model.markPlaceRevealed(id),
         onSelect: (id: string) => { this.model.selectedPlaceId = id; },
         onLongPress: (coordinate) => this.model.selectMap(coordinate) })
         .visibility(this.viewIndex === 0 ? Visibility.Visible : Visibility.Hidden)
@@ -45,6 +47,10 @@ export struct MapPage {
           if (this.model.error) { ActionButton({ label: '刷新地点', compact: true, onAction: () => this.model.retryPlaces() }) }
           if (this.model.selectedPlace()) {
             PlacePreview({ place: this.model.selectedPlace() as Place,
+              newMemoryAvailable: this.model.recentVisit?.isNewPlace === true && this.model.recentVisit?.placeId === this.model.selectedPlaceId,
+              onMemory: () => {
+                if (this.model.recentVisit) { this.stack.pushPathByName(Routes.Memory, new EntityRoute(this.model.recentVisit.visitId)); }
+              },
               revisitAvailable: !this.model.locating && !this.model.selectingMap,
               onOpen: () => this.stack.pushPathByName(Routes.Place, new EntityRoute(this.model.selectedPlaceId)),
               onRevisit: () => {

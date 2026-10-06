@@ -7,6 +7,8 @@ import { Theme } from '../theme/Theme';
 export struct PlacePreview {
   @Require @Param place: Place;
   @Param revisitAvailable: boolean = true;
+  @Param newMemoryAvailable: boolean = false;
+  @Event onMemory: () => void = () => {};
   @Event onOpen: () => void = () => {};
   @Event onRevisit: () => void = () => {};
 
@@ -17,7 +19,9 @@ export struct PlacePreview {
           Text(this.place.name).fontSize(22).fontWeight(FontWeight.Medium).fontColor(Theme.ink)
           Text(`${this.place.city || '我的地点'} · 来过 ${this.place.visitCount} 次`).fontSize(13).fontColor(Theme.muted)
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-        ActionButton({ label: '查看记忆', compact: true, onAction: () => this.onOpen() }).width(96)
+        ActionButton({ label: this.newMemoryAvailable ? '继续写记忆' : '查看记忆', compact: true,
+          onAction: () => { if (this.newMemoryAvailable) { this.onMemory(); } else { this.onOpen(); } } })
+          .width(this.newMemoryAvailable ? 112 : 96)
       }.width('100%')
       Row() {
         Text(this.place.lastVisitedAt ? `最近到访 ${new Date(this.place.lastVisitedAt).toLocaleDateString()}` : '还没有到访记录')

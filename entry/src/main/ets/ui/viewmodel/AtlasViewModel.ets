@@ -23,6 +23,8 @@ export class AtlasViewModel {
   @Trace draft: VisitDraft | undefined = undefined;
   @Trace showAdd: boolean = false;
   @Trace notice: string = '';
+  @Trace recentVisit: RecordedVisit | undefined = undefined;
+  @Trace unlockPlaceId: string = '';
   private repository?: AtlasRepository;
   private location?: VisitLocationSource;
   private pendingRevealId: string = '';
@@ -165,12 +167,20 @@ export class AtlasViewModel {
     this.begin(draft);
   }
 
+  markPlaceRevealed(id: string): void {
+    if (!id || this.unlockPlaceId !== id) { return; }
+    this.unlockPlaceId = '';
+    Haptics.confirm();
+  }
+
   async save(draft: VisitDraft): Promise<RecordedVisit> {
     const result = await this.getRepository().recordVisit(draft);
+    this.recentVisit = result;
+    this.unlockPlaceId = result.isNewPlace ? result.placeId : '';
     this.showAdd = false;
     this.selectedPlaceId = result.placeId;
     this.pendingRevealId = result.placeId;
-    this.notice = result.isNewPlace ? '一个地点，一段新的记忆' : '再次来到这里，留下新的记忆';
+    this.notice = result.isNewPlace ? '地点和记忆已保存' : '再次来到这里，记忆已保存';
     // A refresh failure is a read failure after a successful commit, never a failed write.
     try {
       await this.refresh();

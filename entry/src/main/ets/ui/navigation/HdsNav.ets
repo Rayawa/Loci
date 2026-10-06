@@ -47,7 +47,9 @@ export struct HdsNav {
       .onNavBarStateChange((visible: boolean) => this.onRootVisibleChanged(visible))
       .titleBar({ style: navigationTitle(this.title, this.experience.materialLevel).style,
         content: { title: navigationTitle(this.title).content?.title,
-          menu: { value: this.menus.map((item: TitleAction): TitleMenuItem => ({ content: item })) },
+          // A centered Dashboard segment leaves room for one native menu entry.
+          // HDS collects multiple actions into its own overflow menu.
+          menu: { maxCount: 1, value: this.menus.map((item: TitleAction): TitleMenuItem => ({ content: item })) },
           stackBuilder: () => { this.segment() } } })
       .customNavContentTransition((_from: NavContentInfo, _to: NavContentInfo, operation: NavigationOperation) => {
         if (operation === NavigationOperation.POP) { Haptics.back(); }

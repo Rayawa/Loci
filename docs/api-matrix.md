@@ -6,8 +6,10 @@
 | --- | --- | --- |
 | HdsNavigation / HdsNavDestination / titleBar / toolbarConfiguration | 18 | 页面返回栈、原生标题与动作工具栏；基线 23 可用 |
 | HdsTabs | 20 | 地图、旅行、足迹一级入口承载；基线 23 可用 |
+| HdsNavigation titleBar menu.maxCount | 18 | 居中 Segment 页面限制为一个原生菜单占位，多个动作由 HDS 更多菜单承载；API 26 已验证无重叠 |
 | TabSegmentButtonV2 / SegmentButtonV2Items | 18 | 复制 Dashboard 分段控件，固定在 titleBar stackBuilder；基线 23 可用 |
 | ignoreLayoutSafeArea | 12 | 复用 Dashboard 的 Navigation/Destination 沉浸布局与内容留白 |
+| HdsNavDestination.onActive / onInactive | 21 | 地点详情地图跟随页面可见状态，后台不触发 Toast 或选点 |
 | ArkUI V2 ObservedV2 / Trace / ComponentV2 | 12 | UI 状态与纯实体分离；基线 23 可用 |
 | bindSheet / onWillDismiss / DismissSheetAction | 12（拦截关闭） | 录入面板、关闭防丢失、保存时阻止关闭 |
 | UIContext.showAlertDialog | 10 | 使用当前窗口上下文显示原生确认 |
@@ -17,7 +19,9 @@
 | createTransaction / Transaction.execute / querySql / commit / rollback | 14 | Place + Visit 原子写入与迁移 |
 | MapComponent / getEventManager / marker / rectifyCoordinate | 12 | 地图、事件、旗帜、区域坐标归一；需要 AGC 地图服务 |
 | MapEventManager.mapLoad | 11 | 控制器初始化后等待地图加载完成；15 秒超时提供重试并清理监听 |
-| ohos.permission.GET_NETWORK_INFO / INTERNET | 8 / 9（SDK 权限声明） | Map Kit 网络状态查询与联网；normal 权限，模块声明即可，设备复验待完成 |
+| MapComponentController.animateCameraStatus | 12 | 首次保存等待聚焦结束再显示旗帜；基线 23 可用，真实地图未验收 |
+| Marker.setAnimation / startAnimation、AlphaAnimation | 11 | 首次旗帜淡入，使用 Dashboard 的 280ms 入场时长；失败保留静态旗帜，真实地图未验收 |
+| ohos.permission.GET_NETWORK_INFO / INTERNET | 8 / 9（SDK 权限声明） | Map Kit 网络状态查询与联网；normal 权限，模块声明即可；重新安装后 own-PID 日志未再出现网络查询 201，服务鉴权仍失败 |
 | geoLocationManager.getCurrentLocation / getAddressesFromLocation | 9 | 用户触发单次定位与可失败的逆地理编码 |
 | abilityAccessCtrl.requestPermissionsFromUser | 9 | 按需申请近似与精确定位 |
 | hdsEffect.HdsEffectBuilder.pointLight | 20 | 原样复用 Dashboard 的按压光場与松开恢复 |
@@ -34,3 +38,5 @@
 SDK 对照：`hms/ets/api/@hms.hds.hdsBaseComponent.d.ets`、`@hms.core.map.map.d.ts`；`openharmony/ets/api/@ohos.data.relationalStore.d.ts`、`@ohos.geoLocationManager.d.ts` 与 `openharmony/ets/component/common.d.ts`。
 
 官方指南：[关系型数据库](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/data-persistence-by-rdb-store)、[按压阴影](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/ui-design-visual-effect-background-color)、[导航](https://developer.huawei.com/consumer/cn/doc/doccenter-references/api/ts-basic-components-navigation)、[Map Kit](https://developer.huawei.com/consumer/cn/doc/doccenter-scenario/bpta-shared-bicycle)。部分动态页面无法完整提取，声明确认与编译、设备验收分别记录。
+
+覆盖物动画依据：[华为 Map Kit 动画](https://developer.huawei.com/consumer/cn/doc/doccenter-capabilities/api/map-map-animation)，[设置与启动覆盖物动画](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/map-map-basepriorityoverlay)。Marker 方法与 animateCameraStatus 签名另已对照本机官方 API 26 SDK；不引用 Android 或 Java 实现。

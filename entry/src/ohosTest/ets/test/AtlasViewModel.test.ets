@@ -106,5 +106,33 @@ export default function atlasViewModelTest(context: common.UIAbilityContext): vo
       expect(model.focus?.id).assertEqual(saved.placeId);
       expect(model.places[0].visitCount).assertEqual(1);
     });
+
+    it('onlyFirstPlaceRequestsAnUnlockAndRestoringDoesNotReplayIt', 0, async () => {
+      const selection = model.selectMap({ latitude: 39.932, longitude: 116.389 });
+      location.finish(); await selection;
+      if (!model.draft) { throw new Error('未生成草稿'); }
+      const first = await model.save(model.draft);
+      expect(model.unlockPlaceId).assertEqual(first.placeId);
+      expect(model.recentVisit?.visitId).assertEqual(first.visitId);
+      model.markPlaceRevealed('another-place');
+      expect(model.unlockPlaceId).assertEqual(first.placeId);
+      model.markPlaceRevealed(first.placeId);
+      expect(model.unlockPlaceId).assertEqual('');
+
+      const restored = new AtlasViewModel(repository, location);
+      await restored.initialize(context);
+      expect(restored.unlockPlaceId).assertEqual('');
+      expect(restored.recentVisit).assertUndefined();
+      model.revisit(model.places[0]);
+      if (!model.draft) { throw new Error('未生成重访草稿'); }
+      model.draft.diary = '第二次到访的记忆';
+      const second = await model.save(model.draft);
+      expect(second.isNewPlace).assertFalse();
+      expect(second.placeId).assertEqual(first.placeId);
+      expect(second.visitId === first.visitId).assertFalse();
+      expect(model.unlockPlaceId).assertEqual('');
+      expect(model.recentVisit?.isNewPlace).assertFalse();
+      expect(model.places[0].visitCount).assertEqual(2);
+    });
   });
 }
