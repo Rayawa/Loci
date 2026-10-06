@@ -1,4 +1,5 @@
 import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { geoLocationManager } from '@kit.LocationKit';
 import { map, mapCommon } from '@kit.MapKit';
 import { CoordinateSystem, VisitDraft, VisitSource } from '../../domain/model/Atlas';
@@ -17,7 +18,9 @@ export class LocationService implements VisitLocationSource {
     const authorization = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(this.context, permissions);
     // Approximate-only permission is insufficient to choose a physical place reliably.
     if (authorization.authResults.length < 2 || authorization.authResults[0] !== 0 || authorization.authResults[1] !== 0) {
-      throw new Error('记录当前位置需要精确定位。你也可以长按地图选择地点');
+      const denied: BusinessError = new Error('Precise location permission denied') as BusinessError;
+      denied.code = 201;
+      throw denied as Error;
     }
     const location = await geoLocationManager.getCurrentLocation({
       priority: geoLocationManager.LocationRequestPriority.FIRST_FIX,

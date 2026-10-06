@@ -1,4 +1,5 @@
 import { common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 import { mapCommon } from '@kit.MapKit';
 import { AppDependencies } from '../../app/AppDependencies';
@@ -7,6 +8,7 @@ import { AtlasRepository } from '../../domain/repository/AtlasRepository';
 import { distanceMeters } from '../../domain/service/VisitRules';
 import { Haptics } from '../../service/haptics/Haptics';
 import { LocationService, VisitLocationSource } from '../../service/location/LocationService';
+import { locationFailureMessage } from '../../service/location/LocationErrors';
 
 @ObservedV2
 export class AtlasViewModel {
@@ -14,6 +16,7 @@ export class AtlasViewModel {
   @Trace loading: boolean = true;
   @Trace ready: boolean = false;
   @Trace error: string = '';
+  @Trace placesError: string = '';
   @Trace locating: boolean = false;
   @Trace selectingMap: boolean = false;
   @Trace selectedPlaceId: string = '';
@@ -37,6 +40,7 @@ export class AtlasViewModel {
   async initialize(context: common.UIAbilityContext): Promise<void> {
     this.loading = true;
     this.error = '';
+    this.placesError = '';
     try {
       this.repository = this.repository ?? await AppDependencies.repository(context);
       this.location = this.location ?? new LocationService(context);
@@ -44,6 +48,7 @@ export class AtlasViewModel {
       this.ready = true;
     } catch (error) {
       this.error = (error as Error).message || '无法打开本地足迹，请重试';
+      this.placesError = this.error;
     } finally {
       this.loading = false;
     }
@@ -73,8 +78,10 @@ export class AtlasViewModel {
     try {
       await this.refresh();
       this.error = '';
+      this.placesError = '';
     } catch (_) {
       this.error = '暂时无法更新地点，请稍后重试';
+      this.placesError = this.error;
     } finally {
       this.loading = false;
     }
@@ -115,7 +122,7 @@ export class AtlasViewModel {
     try {
       this.begin(await this.location.locate());
     } catch (error) {
-      this.error = (error as Error).message || '定位失败，你可以长按地图补记';
+      this.error = locationFailureMessage(error as BusinessError);
     } finally {
       this.locating = false;
     }
@@ -135,7 +142,7 @@ export class AtlasViewModel {
       focus.coordinateSystem = coordinate.coordinateSystem;
       this.focus = focus;
     } catch (error) {
-      this.error = (error as Error).message || '暂时无法定位，请稍后重试';
+      this.error = locationFailureMessage(error as BusinessError);
     } finally {
       this.locating = false;
     }
@@ -146,10 +153,11 @@ export class AtlasViewModel {
       return;
     }
     this.selectingMap = true;
+    this.error = '';
     try {
       this.begin(await this.location.select(position));
     } catch (error) {
-      this.error = (error as Error).message || '选点失败，请重试';
+      this.error = locationFailureMessage(error as BusinessError);
     } finally {
       this.selectingMap = false;
     }
@@ -184,8 +192,10 @@ export class AtlasViewModel {
     // A refresh failure is a read failure after a successful commit, never a failed write.
     try {
       await this.refresh();
+      this.placesError = '';
     } catch (_) {
       this.error = '记忆已保存，地点列表暂未更新，请刷新';
+      this.placesError = this.error;
     }
     Haptics.confirm();
     return result;

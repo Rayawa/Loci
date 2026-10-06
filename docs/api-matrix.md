@@ -40,3 +40,5 @@ SDK 对照：`hms/ets/api/@hms.hds.hdsBaseComponent.d.ets`、`@hms.core.map.map.
 官方指南：[关系型数据库](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/data-persistence-by-rdb-store)、[按压阴影](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/ui-design-visual-effect-background-color)、[导航](https://developer.huawei.com/consumer/cn/doc/doccenter-references/api/ts-basic-components-navigation)、[Map Kit](https://developer.huawei.com/consumer/cn/doc/doccenter-scenario/bpta-shared-bicycle)。部分动态页面无法完整提取，声明确认与编译、设备验收分别记录。
 
 覆盖物动画依据：[华为 Map Kit 动画](https://developer.huawei.com/consumer/cn/doc/doccenter-capabilities/api/map-map-animation)，[设置与启动覆盖物动画](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/map-map-basepriorityoverlay)。Marker 方法与 animateCameraStatus 签名另已对照本机官方 API 26 SDK；不引用 Android 或 Java 实现。
+
+定位失败反馈依据：[华为 Location Kit 错误码](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V14/errorcode-geolocationmanager-V14)，以及本机官方 `@ohos.geoLocationManager.d.ts` 的 getCurrentLocation 抛错声明（201、3301000、3301100、3301200）；`@hms.core.map.map.d.ts` 的 rectifyCoordinate 声明 1002600013（当前路由位置未知）。新版仅把这些既有业务码转换为用户可理解的提示，没有增加未经确认的定位接口。

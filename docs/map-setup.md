@@ -31,3 +31,5 @@ DF:21:A3:C0:9F:79:54:57:93:05:F8:5C:64:F8:0C:AD:86:F7:98:53:EE:3A:88:7C:1D:EC:95
 官方依据：[HarmonyOS Map Kit 集成场景](https://developer.huawei.com/consumer/cn/doc/doccenter-scenario/bpta-shared-bicycle)，[地图错误码与鉴权原因](https://developer.huawei.com/consumer/en/doc/harmonyos-references-V14/map-errorcode-V14)。历史文档仅辅助解释，调用签名以当前官方 API 26 SDK 为准。
 
 网络权限依据：[华为官方网络连接接口](https://developer.huawei.com/consumer/en/doc/harmonyos-references-V3/js-apis-net-connection-0000001333720849-V3)；本机 SDK 的 `@ohos.net.connection.d.ts` 也声明 getDefaultNet/getNetCapabilities 所需 GET_NETWORK_INFO 权限。
+
+当前 AGC 缺失也影响“记录这里”：LocationService 调用官方 rectifyCoordinate 校正位置时，真机曾返回当前路由位置未知的诊断（SDK 声明对应 1002600013）。新包转换为中文提示并保留本地数据状态。不能据此宣称录入或 Memory 界面已经验收；不使用假坐标绕过首轮地图门槛。

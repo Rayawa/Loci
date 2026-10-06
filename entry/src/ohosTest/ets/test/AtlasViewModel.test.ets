@@ -1,5 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it } from '@ohos/hypium';
 import { common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { relationalStore } from '@kit.ArkData';
 import { util } from '@kit.ArkTS';
 import { mapCommon } from '@kit.MapKit';
@@ -12,8 +13,13 @@ import { AtlasViewModel } from '../../../main/ets/ui/viewmodel/AtlasViewModel';
 
 class ControlledLocation implements VisitLocationSource {
   selectCalls: number = 0;
+  locateFailureCode: number = 3301200;
   private complete?: (value: VisitDraft) => void;
-  locate(includeAddress?: boolean): Promise<VisitDraft> { return Promise.reject(new Error('未请求当前定位')); }
+  locate(includeAddress?: boolean): Promise<VisitDraft> {
+    const error: BusinessError = new Error('Native service diagnostic') as BusinessError;
+    error.code = this.locateFailureCode;
+    return Promise.reject(error);
+  }
   select(position: mapCommon.LatLng): Promise<VisitDraft> {
     this.selectCalls++;
     return new Promise<VisitDraft>((resolve) => { this.complete = resolve; });
@@ -100,11 +106,44 @@ export default function atlasViewModelTest(context: common.UIAbilityContext): vo
       expect(model.showAdd).assertFalse();
       expect((await repository.getVisit(saved.visitId)).diary).assertEqual('补记的一段记忆');
       expect(model.error.length > 0).assertTrue();
+      expect(model.placesError.length > 0).assertTrue();
       await model.retryPlaces();
       expect(model.error).assertEqual('');
+      expect(model.placesError).assertEqual('');
       expect(model.selectedPlace()?.id).assertEqual(saved.placeId);
       expect(model.focus?.id).assertEqual(saved.placeId);
       expect(model.places[0].visitCount).assertEqual(1);
+    });
+
+    it('locationFailuresKeepDataReadyAndDoNotOfferPlaceRefresh', 0, async () => {
+      location.locateFailureCode = 1002600013;
+      await model.recordHere();
+      expect(model.error.includes('地图尚未准备好')).assertTrue();
+      expect(model.error.includes('Native service diagnostic')).assertFalse();
+      expect(model.placesError).assertEqual('');
+      expect(model.ready).assertTrue();
+      expect(model.locating).assertFalse();
+      expect(model.showAdd).assertFalse();
+      expect(model.draft).assertUndefined();
+      location.locateFailureCode = 3301200;
+      await model.locateOnMap();
+      expect(model.error.includes('暂时无法获取当前位置')).assertTrue();
+      expect(model.placesError).assertEqual('');
+      expect(model.focus).assertUndefined();
+    });
+
+    it('locationFailurePreservesAnIndependentPlaceReadRetry', 0, async () => {
+      repository.failNextRead = true;
+      await model.retryPlaces();
+      const readError = model.placesError;
+      expect(readError.length > 0).assertTrue();
+      await model.recordHere();
+      expect(model.placesError).assertEqual(readError);
+      expect(model.error === readError).assertFalse();
+      await model.retryPlaces();
+      expect(model.placesError).assertEqual('');
+      expect(model.error).assertEqual('');
+      expect(model.ready).assertTrue();
     });
 
     it('onlyFirstPlaceRequestsAnUnlockAndRestoringDoesNotReplayIt', 0, async () => {

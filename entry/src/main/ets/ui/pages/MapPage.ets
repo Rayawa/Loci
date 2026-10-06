@@ -44,7 +44,7 @@ export struct MapPage {
         if (this.model.loading) {
           StatePanel({ title: '正在打开你的世界', loading: true })
         } else {
-          if (this.model.error) { ActionButton({ label: '刷新地点', compact: true, onAction: () => this.model.retryPlaces() }) }
+          if (this.model.placesError) { ActionButton({ label: '刷新地点', compact: true, onAction: () => this.model.retryPlaces() }) }
           if (this.model.selectedPlace()) {
             PlacePreview({ place: this.model.selectedPlace() as Place,
               newMemoryAvailable: this.model.recentVisit?.isNewPlace === true && this.model.recentVisit?.placeId === this.model.selectedPlaceId,

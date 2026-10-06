@@ -36,7 +36,7 @@ sh scripts/build.sh test
 
 ## 验证与项目管理
 
-设备 Hypium 测试：`entry/src/ohosTest/ets/test/List.test.ets` 汇总数据库与 ViewModel 两个套件，独立随机命名测试库，不操作正式 `loci.db`。通过 DevEco 测试运行器执行，或使用显式设备标识：
+设备 Hypium 测试：`entry/src/ohosTest/ets/test/List.test.ets` 汇总数据库、ViewModel 与 DiskStorage 三个套件，独立随机命名测试库，不操作正式 `loci.db`。通过 DevEco 测试运行器执行，或使用显式设备标识：
 
 ```sh
 hdc list targets
