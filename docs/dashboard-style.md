@@ -35,3 +35,8 @@
 2026-10-06 真机发现 `AppShell.mapContent` 在 HdsNav 中读取 model 时崩溃。直接传给 BuilderParam 的成员 Builder 改变了 this；所有页面内容和 destination 均改为箭头闭包保留父组件上下文。编译成功不足以证明这条路径正常，因此另外执行冷启动、切页、设置与返回检查。
 
 之前把 Navigation 放在 Tabs 内并额外加 56/108vp padding，偏离 Dashboard，造成沉浸与位置问题。本轮移除这套布局；列表内容使用参考工程的首尾留白，地图本体延伸到背景，悬浮预览单独避让底栏。新布局已构建安装并完成 API 26 冷启动、三标签与所有分段、设置滚动、返回和振动重启恢复。真机发现多个地图菜单遮住 Segment，已将 titleBar menu.maxCount 设为 1，由 HDS 原生更多菜单承载全部地图动作。Segment 和主 Tabs 在各根页面与返回后位置一致。其他设备尺寸、字体和真实地图仍未验收，不能宣称完整 1:1 视觉验收通过。
+
+
+## 2026-10-07 分段控件阴影修复
+
+同步用户已在 Dashboard 真机确认的修复：HdsMiniBarButton 的 HdsTabs 背景以实际高度（barHeight − 12）的一半为圆角单独裁剪，避免胶囊四角露出灰色矩形；背景不参与命中测试，前景按压光效和 V2 状态回调保持原样。HdsTitleBarSegment 显式关闭背景模糊，由外层迷你栏统一提供材质。`sh scripts/build.sh main` 构建及签名成功，`git diff --check` 通过。本轮未安装 Loci 修复包或进行修复后的真机截图验收。
