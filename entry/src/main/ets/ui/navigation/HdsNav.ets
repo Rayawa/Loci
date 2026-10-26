@@ -18,6 +18,7 @@ interface TitleMenuItem { content: TitleAction; }
 export struct HdsNav {
   @Require @Param stack: NavPathStack;
   @Require @Param title: string;
+  @Param showSegment: boolean = true;
   @Param menus: TitleAction[] = [];
   @Require @Param segmentItems: SegmentButtonV2Items;
   @Param selectedIndexes: number[] = [0];
@@ -31,10 +32,12 @@ export struct HdsNav {
   @Builder emptyDestination(name: string, parameter: Object) { Blank() }
   @Builder segment() {
     Column() {
+      if (this.showSegment) {
       HdsTitleBarSegment({ items: this.segmentItems, selectedIndexes: this.selectedIndexes,
         maxFontScale: 2, segmentHeight: 48, normalWidth: '50%', experimentalWidth: '50%', experimentalHeight: 52,
         onSelected: (index: number) => this.onSegmentSelected(index), onItemClicked: () => Haptics.confirm() })
         .align(Alignment.Center).margin({ top: 8 })
+      }
     }.width('100%').height('100%').justifyContent(FlexAlign.Center)
   }
 

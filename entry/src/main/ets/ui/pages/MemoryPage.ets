@@ -1,4 +1,4 @@
-import { destinationTitle } from '../theme/NavigationStyle';
+import { destinationActions, PageAction } from '../theme/NavigationStyle';
 import { ExperienceSettings } from '../../service/settings/ExperienceSettings';
 import { Icons } from '../../common/icons';
 import { pageTransition } from '../../common/motion';
@@ -43,6 +43,12 @@ export struct MemoryPage {
     return true;
   }
 
+  private actions(): PageAction[] {
+    return [{ label: '保存', icon: Icons.save,
+      isEnabled: !this.model.saving && !this.model.loading && !!this.model.visit && this.model.dirty(),
+      action: () => this.model.save(this.atlas.getRepository()) }];
+  }
+
   build() {
     HdsNavDestination() {
       Scroll() {
@@ -55,9 +61,8 @@ export struct MemoryPage {
               onAction: () => this.model.load(this.atlas.getRepository(), this.visitId) })
           } else {
             Text(this.model.visit.localDate).fontSize(30).fontWeight(FontWeight.Medium).fontColor(Theme.ink).width('100%')
-            Text('每次来到这里，都有不同的心境。').fontSize(14).fontColor(Theme.muted).width('100%')
             MoodSelector({ value: this.model.mood, onSelect: (value: number) => { this.model.mood = value; } }).enabled(!this.model.saving)
-            TextArea({ text: this.model.diary, placeholder: '写下想要留下的片段…' }).height(320).maxLength(100000)
+            TextArea({ text: this.model.diary, placeholder: '记忆' }).height(320).maxLength(100000)
               .onChange((value: string) => { this.model.diary = value; this.model.notice = ''; })
               .enabled(!this.model.saving).id('memoryDiary').accessibilityText('日记正文')
 
@@ -65,11 +70,8 @@ export struct MemoryPage {
           Blank().height(110).width('100%')
         }.padding(Theme.pagePadding).width('100%')
       }.height('100%').width('100%').backgroundColor(Theme.background)
-    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('这一段记忆', this.experience.materialLevel)).onBackPressed(() => this.onBack())
+    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationActions('记忆', this.experience.materialLevel, this.actions())).onBackPressed(() => this.onBack())
       .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
-      .toolbarConfiguration([{ value: this.model.saving ? '正在保存…' : '保存记忆',
-        symbolIcon: Icons.modifier(Icons.save),
-        status: this.model.saving || this.model.loading || !this.model.visit || !this.model.dirty() ? ToolbarItemStatus.DISABLED : ToolbarItemStatus.NORMAL,
-        action: () => this.model.save(this.atlas.getRepository()) }])
+
   }
 }

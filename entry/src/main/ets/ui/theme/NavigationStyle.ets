@@ -54,3 +54,18 @@ export function destinationTitle(title: string, materialLevel: number = 1): HdsN
   const shared = navigationTitle(title, materialLevel);
   return { style: shared.style, content: shared.content };
 }
+
+export interface PageAction {
+  label: string;
+  icon: Resource;
+  isEnabled: boolean;
+  action: () => void;
+}
+
+interface PageMenuItem { content: PageAction; }
+
+export function destinationActions(title: string, level: number, actions: PageAction[]): HdsNavigationTitleBarOptions {
+  const shared = destinationTitle(title, level);
+  return { style: shared.style, content: { title: shared.content?.title,
+    menu: { maxCount: 2, value: actions.map((action: PageAction): PageMenuItem => ({ content: action })) } } };
+}

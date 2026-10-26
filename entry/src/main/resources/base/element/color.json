@@ -59,6 +59,38 @@
     {
       "name": "border",
       "value": "#B8D0E5"
+    },
+    {
+      "name": "activity_work",
+      "value": "#1E6FCD"
+    },
+    {
+      "name": "activity_study",
+      "value": "#7860B7"
+    },
+    {
+      "name": "activity_life",
+      "value": "#B16A2A"
+    },
+    {
+      "name": "activity_exercise",
+      "value": "#23826B"
+    },
+    {
+      "name": "activity_rest",
+      "value": "#8A647E"
+    },
+    {
+      "name": "activity_travel",
+      "value": "#3A7D94"
+    },
+    {
+      "name": "activity_other",
+      "value": "#687889"
+    },
+    {
+      "name": "v3_chart_grid",
+      "value": "#FFD8E0EB"
     }
   ]
 }

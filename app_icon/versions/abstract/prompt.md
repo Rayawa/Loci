@@ -1,0 +1,11 @@
+# 抽象标识最终提示词 · 2026-10-24
+
+内置image_gen分别生成透明前景和不透明背景；sips等比缩放至1024×1024。前景为统一橙色的三条记录短线与开放路线/落点，浅立体；背景为深蓝渐变。前景采用独立生成，未使用边缘有杂点的提取试稿。
+
+## 前景
+
+Use case: logo-brand. Create a clean final logo foreground on genuine transparent alpha, square 1024x1024. For a personal daily-life and places journal: TWO separate simple abstract signs. On left, exactly three horizontal rounded bars, aligned left, descending widths 250, 195, 140 pixels, 52 pixels thick, at vertical centers 420, 510, 600. On right, a single broad flowing OPEN route curve with one round endpoint: a smooth abstract looping trail, not a pin, not a closed ring, not a clock. The route is a simple continuous thick stroke, similar height to the three bars, positioned to the right with generous clear separation. All shapes are opaque rich warm apricot orange; use restrained shallow solid 3D side surfaces and a narrow soft highlight, like precision enamel. Keep the design simple, minimal, nearly flat and very sharp; no pale white shapes, no shadows outside shapes, no glow, no textures, no grain, no distressed edges, no speckles or disconnected debris. All visible colored pixels belong to the clean broad geometric shapes themselves. Entire emblem optically centered in central 64% width and 38% height, with large fully transparent margin. Clean rounded ends, consistent stroke weights. No background rectangle, no navy, no tiles, no frame, no book, no map sheet, no text or numbers. This is a production alpha logo asset, not a product photograph or mockup.
+
+## 背景
+
+Use case: precise-object-edit. Edit target: the supplied abstract app-icon concept. Create ONLY its clean navy blue BACKGROUND layer. Remove both the ivory journal strokes and the orange route, including all of their shadows and highlights, and seamlessly reconstruct the empty background. Preserve the original square composition and overall blue color direction: restrained cool royal-blue illumination in the upper left fading smoothly to deep ink navy in the lower right. The whole image should be an uninterrupted, very smooth subtle gradient with all pixels opaque. No symbols, no text, no texture, no noisy grain, no ghost imprints, no frame, no border, no rounded corners or white margin. Square 1024x1024, edge-to-edge full background.

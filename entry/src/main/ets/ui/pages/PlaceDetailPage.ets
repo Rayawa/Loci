@@ -1,4 +1,4 @@
-import { destinationTitle } from '../theme/NavigationStyle';
+import { destinationActions, PageAction } from '../theme/NavigationStyle';
 import { ExperienceSettings } from '../../service/settings/ExperienceSettings';
 import { Icons } from '../../common/icons';
 import { pageTransition } from '../../common/motion';
@@ -23,6 +23,12 @@ export struct PlaceDetailPage {
 
   private load(): void {
     this.model.load(this.atlas.getRepository(), this.placeId);
+  }
+
+  private actions(): PageAction[] {
+    return [{ label: '到访', icon: Icons.add,
+      isEnabled: !!this.model.place && !this.atlas.locating && !this.atlas.selectingMap && !this.atlas.showAdd,
+      action: () => { if (this.model.place) { this.atlas.revisit(this.model.place); } } }];
   }
 
   build() {
@@ -56,9 +62,9 @@ export struct PlaceDetailPage {
               }.layoutWeight(1).alignItems(HorizontalAlign.Start)
 
             }.width('100%')
-            Text('时间在这里留下的片段').fontSize(16).fontColor(Theme.muted).width('100%')
+            Text('到访记录').fontSize(16).fontColor(Theme.muted).width('100%')
             if (this.model.visits.length === 0) {
-              StatePanel({ title: '记忆还在路上', message: '再次来到这里，留下下一段记忆。' })
+              StatePanel({ title: '暂无到访' })
             }
             ForEach(this.model.visits, (visit: Visit) => {
               VisitCard({ visit: visit,
@@ -68,11 +74,9 @@ export struct PlaceDetailPage {
           Blank().height(110).width('100%')
         }.width('100%').padding(Theme.pagePadding)
       }.height('100%').width('100%').backgroundColor(Theme.background)
-    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationTitle('地点记忆', this.experience.materialLevel))
+    }.titleMode(HdsNavDestinationTitleMode.MINI).transition(pageTransition()).titleBar(destinationActions('地点', this.experience.materialLevel, this.actions()))
       .onActive(() => { this.activeMap = true; this.load(); }).onInactive(() => { this.activeMap = false; })
       .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
-      .toolbarConfiguration([{ value: '再次来到这里', symbolIcon: Icons.modifier(Icons.add),
-        status: this.model.place && !this.atlas.locating && !this.atlas.selectingMap && !this.atlas.showAdd ? ToolbarItemStatus.NORMAL : ToolbarItemStatus.DISABLED,
-        action: () => { if (this.model.place) { this.atlas.revisit(this.model.place); } } }])
+
   }
 }

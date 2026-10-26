@@ -2,6 +2,11 @@ import { SymbolGlyphModifier } from '@kit.ArkUI';
 
 // All navigation and actions resolve their system symbols here.
 export class Icons {
+  static readonly journal: Resource = $r('sys.symbol.calendar');
+  static readonly statistics: Resource = $r('sys.symbol.histogram');
+  static readonly person: Resource = $r('sys.symbol.person');
+  static readonly sync: Resource = $r('sys.symbol.arrow_clockwise');
+  static readonly info: Resource = $r('sys.symbol.info_circle');
   static readonly map: Resource = $r('sys.symbol.map');
   static readonly trips: Resource = $r('sys.symbol.airplane');
   static readonly atlas: Resource = $r('sys.symbol.flag');

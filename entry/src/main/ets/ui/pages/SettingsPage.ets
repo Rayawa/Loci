@@ -1,3 +1,4 @@
+import { AppIcon } from '../components/AppIcon';
 import { common } from '@kit.AbilityKit';
 import { HdsNavDestination, HdsNavDestinationTitleMode } from '@kit.UIDesignKit';
 import { cancelStaggerEnterAnimation, pageTransition, startStaggerEnterAnimation } from '../../common/motion';
@@ -32,9 +33,9 @@ export struct SettingsPage {
 
   @Builder appIdentity() {
     Column({ space: 8 }) {
-      Image($r('app.media.layered_image')).width(100).height(100).borderRadius(22).margin({ bottom: 10 })
-      Text('Loci').fontSize(30).fontWeight(800).fontColor(Theme.accent).textAlign(TextAlign.Center)
-      Text('个人空间记忆').fontSize(20).fontWeight(600).fontColor(Theme.muted).textAlign(TextAlign.Center)
+      AppIcon({ iconSize: 100 }).margin({ bottom: 10 })
+      Text('时迹').fontSize(30).fontWeight(800).fontColor(Theme.accent).textAlign(TextAlign.Center)
+      Text('每日时间记录').fontSize(20).fontWeight(600).fontColor(Theme.muted).textAlign(TextAlign.Center)
     }.width('100%').padding({ top: 18, bottom: 18, left: 12, right: 12 })
       .opacity(this.animStep >= 1 ? 1 : 0).translate({ y: this.animStep >= 1 ? 0 : 20 })
   }

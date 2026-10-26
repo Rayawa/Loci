@@ -28,7 +28,7 @@ export struct MapPage {
           Column({ space: 14 }) {
             Blank().height(110)
             if (this.model.filteredPlaces().length === 0) {
-              StatePanel({ title: '从一个地点开始', message: '在地图记录地点后，会在这里看到每一次到访。' })
+              StatePanel({ title: '暂无地点' })
             }
             ForEach(this.model.filteredPlaces(), (place: Place) => {
               ActionButton({ label: `${place.name} · ${place.visitCount} 次到访`,
@@ -60,7 +60,7 @@ export struct MapPage {
                 }
               } })
           } else if (this.model.places.length === 0) {
-            StatePanel({ title: '世界很大，记忆从这里开始', message: '记录此刻所在的地点，或长按地图补记曾经到过的地方。' })
+            StatePanel({ title: '暂无地点' })
           } else if (this.model.filteredPlaces().length === 0) {
             StatePanel({ title: '这一段足迹还没有地点', message: '换一个城市或年份，重新看看自己的世界。',
               action: '显示全部地点', onAction: () => this.model.clearFilters() })

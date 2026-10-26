@@ -15,6 +15,9 @@ import { Theme } from '../theme/Theme';
 // Dashboard SettingsPanel builders, with V2 state and Loci persistence bindings.
 @ComponentV2
 export struct ExperiencePanel {
+  @Param active: boolean = true;
+  @Monitor('active')
+  onActiveChanged(): void { if (this.active) { this.scheduleCacheSizeRefresh(); } }
   @Local experience: ExperienceSettings = ExperienceSettings.shared;
   @Local contentWidth: number = 0;
   @Local cacheSize: string = '计算中…';
@@ -439,7 +442,7 @@ export struct ExperiencePanel {
   }
   aboutToDisappear(): void { if (this.cacheSizeTimer >= 0) { clearTimeout(this.cacheSizeTimer); } }
   private trash(): void {
-    this.getUIContext().showAlertDialog({ message: '将清除本机临时缓存。地点、记忆、用户名和设置会保留。',
+    this.getUIContext().showAlertDialog({ message: '将清除本机临时缓存。时间记录、地点记忆、用户名和设置会保留。',
       primaryButton: { value: '取消', action: () => vibration.dotVibration() },
       secondaryButton: { value: '继续', action: async () => {
         vibration.dotVibration();
@@ -547,7 +550,7 @@ export struct ExperiencePanel {
                     .monopolizeEvents(true)
                     .bindPopup(this.handlePopupTrash, {
                         message:
-                        '清除本机临时缓存；地点、记忆、用户名和设置不会被删除',
+                        '清除本机临时缓存；时间记录、地点记忆、用户名和设置不会被删除',
                         onStateChange: (event) => {
                             if (!event.isVisible) {
                                 this.handlePopupTrash = false;

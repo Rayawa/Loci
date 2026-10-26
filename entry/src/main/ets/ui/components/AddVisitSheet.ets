@@ -9,6 +9,9 @@ import { Theme } from '../theme/Theme';
 export struct AddVisitSheet {
   @Require @Param model: AtlasViewModel;
   @Require @Param draft: VisitDraft;
+  @Param saveVersion: number = 0;
+  @Monitor('saveVersion')
+  onSaveRequested(): void { if (this.saveVersion > 0) { this.save(); } }
   @Event onSaved: (record: RecordedVisit) => void = () => {};
   @Event onEditingState: (dirty: boolean, saving: boolean) => void = () => {};
   @Local name: string = '';
@@ -58,7 +61,7 @@ export struct AddVisitSheet {
     try {
       this.onSaved(await this.model.save(this.draft));
     } catch (error) {
-      this.error = (error as Error).message || '保存失败，内容已保留，请重试';
+      this.error = (error as Error).message || '保存失败';
     } finally {
       this.saving = false;
       this.onEditingState(true, false);
@@ -68,18 +71,16 @@ export struct AddVisitSheet {
   build() {
     Scroll() {
       Column({ space: 18 }) {
-        Text(this.existingId ? '再次来到这里' : '在这里留下记忆').fontSize(26).fontWeight(FontWeight.Medium).fontColor(Theme.ink)
-        Text('地点承载时间，每次到访都是新的记忆。').fontSize(14).fontColor(Theme.muted)
         if (!this.draft.existingPlaceId && this.model.nearby(this.draft).length > 0) {
-          Text('附近已有地点，你可以选择再次到访').fontSize(13).fontColor(Theme.muted)
+          Text('已有地点').fontSize(13).fontColor(Theme.muted)
           ForEach(this.model.nearby(this.draft), (place: Place) => {
             ActionButton({ label: `${this.existingId === place.id ? '已选择 · ' : ''}${place.name} · ${place.visitCount} 次`,
               highlighted: this.existingId === place.id, onAction: () => { this.existingId = place.id; this.changed(); } })
           }, (place: Place) => place.id)
-          ActionButton({ label: '记录为一个新地点', onAction: () => { this.existingId = ''; this.changed(); } })
+          ActionButton({ label: '新地点', onAction: () => { this.existingId = ''; this.changed(); } })
         }
         if (!this.existingId) {
-          TextInput({ text: this.name, placeholder: '给这个地点一个名字' }).maxLength(120).onChange((value: string) => { this.name = value; this.changed(); })
+          TextInput({ text: this.name, placeholder: '地点名称' }).maxLength(120).onChange((value: string) => { this.name = value; this.changed(); })
             .id('placeName').accessibilityText('地点名称')
           Row({ space: 10 }) {
             TextInput({ text: this.city, placeholder: '城市' }).layoutWeight(1).maxLength(120).onChange((value: string) => { this.city = value; this.changed(); })
@@ -94,11 +95,10 @@ export struct AddVisitSheet {
         DatePicker({ selected: new Date(this.visitedAt), end: new Date() }).height(110)
           .onDateChange((date: Date) => { this.visitedAt = Math.min(date.getTime(), Date.now()); this.changed(); })
         MoodSelector({ value: this.mood, onSelect: (value: number) => { this.mood = value; this.changed(); } })
-        TextArea({ text: this.diary, placeholder: '此刻想记住什么？' }).height(140).maxLength(100000)
+        TextArea({ text: this.diary, placeholder: '记忆' }).height(140).maxLength(100000)
           .onChange((value: string) => { this.diary = value; this.changed(); }).id('newDiary').accessibilityText('这次到访的日记')
-        ActionButton({ label: this.saving ? '正在保存…' : '保存这段记忆', highlighted: true,
-          available: !this.saving, onAction: () => this.save() }).id('saveVisit')
-      }.padding({ left: Theme.pagePadding, right: Theme.pagePadding, top: 20, bottom: 36 }).width('100%').enabled(!this.saving)
+
+      }.padding({ left: Theme.pagePadding, right: Theme.pagePadding, top: 100, bottom: 40 }).width('100%').enabled(!this.saving)
     }.width('100%').height('100%').backgroundColor(Theme.surface)
   }
 }

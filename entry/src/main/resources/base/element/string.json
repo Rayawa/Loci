@@ -2,19 +2,19 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "时迹"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "在地点中保存你的记忆"
+      "value": "时间与地点"
     },
     {
       "name": "EntryAbility_label",
-      "value": "Loci"
+      "value": "时迹"
     },
     {
       "name": "location_reason",
-      "value": "用于记录你选择的当前位置，形成个人足迹"
+      "value": "记录所在地点"
     }
   ]
 }
