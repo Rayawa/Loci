@@ -5,7 +5,7 @@
 
 HarmonyOS 原生每日时间记录应用。以「记录 / 地点 / 统计 / 我的」为主导航，支持日期滑动与日历跳转、事项分类、起止时间、本地文本提取、列表/周视图、分类饼图和单项周柱状图。地点与到访记忆由独立一级 HdsTabs 标签承载，保留地图/地点切换。记录首页默认今天，起床到睡觉之间的记录从晚到早排列。直接输入或粘贴多行时间＋事项，支持跨夜、重叠和单个时间点；我的页对齐 Dashboard 的品牌、内嵌设置、分组功能和版本信息。
 
-Stage / ArkTS / ArkUI V2，最低 API 23，目标 API 26，手机优先。UI 延续 Dashboard 的 HDS 导航、悬浮底栏、分组卡片、动效与光场。设计与交互见 [UI/UX 方案](docs/design/daily-records.md)。
+Stage / ArkTS / ArkUI V2，最低 API 20，目标 API 26，手机优先。UI 延续 Dashboard 的 HDS 导航、悬浮底栏、分组卡片、动效与光场。设计与交互见 [UI/UX 方案](docs/design/daily-records.md)。
 
 时间记录与地点数据都保存在本机 ArkData，schema v4 以有序迁移兼容原有 v1/v2/v3，保留原记录身份和地点历史。用户已选择华为账号 + 华为云，目前尚无 AGC 配置：账号授权代码和状态页面已建立，真实登录联调及云同步仍待开通与实现，详见 [华为服务接入](docs/huawei-account-sync.md)。构建通过不代表设备 UI 或云同步验收通过。
 
@@ -16,7 +16,7 @@ Stage / ArkTS / ArkUI V2，最低 API 23，目标 API 26，手机优先。UI 延
 1. 使用包含 API 26 SDK 的 DevEco Studio 打开工程并同步依赖。
 2. 将 `build-profile.example.json5` 复制为 `build-profile.json5`，在 IDE 中配置个人调试签名。该文件与证书/私钥均已忽略，不提交。
 3. 为 `top.rayawa.loci` 在 AppGallery Connect 开通 Map Kit，匹配签名指纹，在 `entry/src/main/module.json5` 的 module metadata 中设置应用 `client_id`。详见 [地图配置](docs/map-setup.md)。
-4. 连接已解锁的 API 23 或更高版本设备，运行 entry。
+4. 连接已解锁的 API 20 或更高版本设备，运行 entry。
 
 终端构建：
 

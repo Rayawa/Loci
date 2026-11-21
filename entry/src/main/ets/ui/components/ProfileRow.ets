@@ -22,6 +22,6 @@ export struct ProfileRow {
       cardBackgroundColor: Theme.surface, cardBorderRadius: 0, hoverBorderRadius: 12,
       cardPrefixMargin: LIST_ITEM_PREFIX_MARGIN, cardSuffixMargin: LIST_ITEM_SUFFIX_MARGIN,
       accessibilityOptions: { accessibilityText: `进入${this.title}` }
-    })
+    }).accessibilityRole(AccessibilityRoleType.BUTTON)
   }
 }

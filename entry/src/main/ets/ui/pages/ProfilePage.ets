@@ -14,8 +14,10 @@ import { Theme } from '../theme/Theme';
 // Dashboard MyPage: identity → inline settings → grouped actions → version information.
 @ComponentV2
 export struct ProfilePage {
+  @Event onShortOperation: (kind: string) => void = () => {};
   @Require @Param stack: NavPathStack;
   @Param active: boolean = false;
+  @Param scrollToTopVersion: number = 0;
   @Local experience: ExperienceSettings = ExperienceSettings.shared;
   @Local account: HuaweiAccount = HuaweiAccount.shared;
   @Local animStep: number = 0;
@@ -27,6 +29,11 @@ export struct ProfilePage {
   aboutToAppear(): void { this.startAnimationOnce(); }
   @Monitor('active')
   onActiveChanged(): void { this.startAnimationOnce(); }
+  @Monitor('scrollToTopVersion')
+  onScrollToTop(): void {
+    if (this.scrollToTopVersion <= 0) { return; }
+    try { this.scroller.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300 } }); } catch (_) {}
+  }
   @Monitor('experience.error')
   onErrorChanged(): void {
     if (this.active && this.experience.error) { showToastSafely(this.getUIContext().getPromptAction(), this.experience.error); }
@@ -37,7 +44,10 @@ export struct ProfilePage {
     this.timers = startStaggerEnterAnimation(this.getUIContext(), 5, (step: number) => { this.animStep = step; });
   }
   aboutToDisappear(): void { cancelStaggerEnterAnimation(this.timers); this.timers = []; }
-  private open(route: string): void { this.stack.pushPathByName(route, new EntityRoute('')); }
+  private open(route: string): void {
+    if (route === Routes.Account || route === Routes.Sync) { this.onShortOperation(route); }
+    else { this.stack.pushPathByName(route, new EntityRoute('')); }
+  }
   private requiredStep(group: string): number {
     if (this.contentWidth >= 840) {
       if (group === 'identity' || group === 'information' || group === 'settings') { return 1; }
@@ -51,8 +61,7 @@ export struct ProfilePage {
 
   @Builder appIdentity() {
     Column({ space: LIST_SECTION_CONTENT_GAP }) {
-      AppIcon({ iconSize: 100 }).margin({ bottom: 10 })
-        .accessibilityText('时迹应用图标')
+      AppIcon({ iconSize: 100 }).margin({ bottom: 10 }).accessibilityText('时迹应用图标')
       Text('时迹').fontSize(30).fontWeight(800).fontColor(Theme.accent).textAlign(TextAlign.Center)
       Text('时间与地点').fontSize(20).fontWeight(600).fontColor(Theme.muted).textAlign(TextAlign.Center)
     }.width('100%').padding({ top: 18, bottom: 18, left: 12, right: 12 })
@@ -62,7 +71,7 @@ export struct ProfilePage {
   }
   @Builder sectionTitle(title: string) {
     Text(title).fontSize(14).fontWeight(FontWeight.Bold).fontColor(Theme.accent)
-      .width('100%').padding({ left: LIST_SECTION_TITLE_START_PADDING })
+      .width('100%').padding({ left: LIST_SECTION_TITLE_START_PADDING }).accessibilityText(title)
   }
   @Builder itemDivider() {
     Divider().color($r('app.color.v3_chart_grid')).margin({ left: 16, right: 16 })
@@ -72,27 +81,27 @@ export struct ProfilePage {
       .color($r('app.color.border')).opacity(this.animStep >= this.requiredStep(group) ? 1 : 0)
   }
   @Builder settingsSection() {
-    Column({ space: 8 }) {
+    Column({ space: LIST_SECTION_CONTENT_GAP }) {
       this.sectionTitle('设置')
-      ExperiencePanel({ active: this.active })
+      ExperiencePanel({ active: this.active, onShortOperation: (kind: string) => this.onShortOperation(kind) })
     }.width('100%').opacity(this.animStep >= this.requiredStep('settings') ? 1 : 0)
       .translate({ y: this.animStep >= this.requiredStep('settings') ? 0 : 20 })
   }
   @Builder accountSection() {
-    Column({ space: 8 }) {
+    Column({ space: LIST_SECTION_CONTENT_GAP }) {
       this.sectionTitle('账号与同步')
       Column() {
         ProfileRow({ title: this.account.authorized ? '华为账号 · 已授权' : '华为账号登录',
-          icon: Icons.user, onOpen: () => this.open(Routes.Account) })
+          icon: Icons.user, onOpen: () => this.open(Routes.Account) }).id('profile-account').focusable(true)
         this.itemDivider()
-        ProfileRow({ title: '云同步', icon: $r('app.media.profile_sync'), onOpen: () => this.open(Routes.Sync) })
+        ProfileRow({ title: '云同步', icon: $r('app.media.profile_sync'), onOpen: () => this.open(Routes.Sync) }).id('profile-云同步').focusable(true)
       }.width('100%').borderRadius(16).backgroundColor(Theme.surface)
         .shadow({ radius: 8, color: Theme.shadow, offsetY: 2 }).clip(true)
     }.width('100%').opacity(this.animStep >= this.requiredStep('account') ? 1 : 0)
       .translate({ y: this.animStep >= this.requiredStep('account') ? 0 : 20 })
   }
   @Builder helpSection() {
-    Column({ space: 8 }) {
+    Column({ space: LIST_SECTION_CONTENT_GAP }) {
       this.sectionTitle('帮助')
       Column() {
         ProfileRow({ title: '更新日志', icon: $r('app.media.profile_log'), onOpen: () => this.open(Routes.Changelog) })
@@ -120,6 +129,7 @@ export struct ProfilePage {
     }.width('100%').padding({ top: 14 })
       .opacity(this.animStep >= this.requiredStep('information') ? 1 : 0)
       .translate({ y: this.animStep >= this.requiredStep('information') ? 0 : 20 })
+      .accessibilityGroup(false).accessibilityLevel('no').accessibilityText('版本与版权信息')
   }
 
   build() {
@@ -127,38 +137,38 @@ export struct ProfilePage {
       if (this.contentWidth >= 840) {
         Row({ space: 16 }) {
           Column() {
-            Blank().height(100).width('100%')
+            Blank().height(8).width('100%')
             Column({ space: 14 }) {
               this.appIdentity()
-              this.sectionDivider('information')
+              Divider().color($r('app.color.border')).opacity(this.animStep >= this.requiredStep('information') ? 1 : 0)
               this.versionInformation()
             }.layoutWeight(1).width('100%').justifyContent(FlexAlign.Center)
           }.layoutWeight(4).height('100%').padding({ left: LIST_PAGE_HORIZONTAL_PADDING, right: LIST_PAGE_HORIZONTAL_PADDING })
           Divider().vertical(true).height('100%').color($r('app.color.border'))
           Scroll(this.scroller) {
             Column() {
-              Blank().height(110).width('100%')
+              Blank().height(8).width('100%')
               this.settingsAndLinks()
               Blank().height(110).width('100%')
             }.width('100%').padding({ left: LIST_PAGE_HORIZONTAL_PADDING, right: LIST_PAGE_HORIZONTAL_PADDING })
-          }.layoutWeight(6).height('100%').align(Alignment.Top).scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+          }.layoutWeight(6).height('100%').align(Alignment.Top).id('profileScroll').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
         }.width('100%').height('100%').constraintSize({ maxWidth: 1440 }).alignItems(VerticalAlign.Top)
           .padding({ left: LIST_PAGE_HORIZONTAL_PADDING, right: LIST_PAGE_HORIZONTAL_PADDING })
       } else {
         Scroll(this.scroller) {
           Column({ space: LIST_SECTION_SPACING }) {
-            Blank().height(100).width('100%')
+            Blank().height(8).width('100%')
             this.appIdentity()
-            this.sectionDivider('settings')
+            Divider().color($r('app.color.border')).opacity(this.animStep >= this.requiredStep('settings') ? 1 : 0)
             this.settingsAndLinks()
-            this.sectionDivider('information')
+            Divider().color($r('app.color.border')).opacity(this.animStep >= this.requiredStep('information') ? 1 : 0)
             this.versionInformation()
             Blank().height(110).width('100%')
           }.width('100%').constraintSize({ maxWidth: 1440 })
             .padding({ left: LIST_PAGE_HORIZONTAL_PADDING, right: LIST_PAGE_HORIZONTAL_PADDING })
-        }.width('100%').height('100%').align(Alignment.Top).scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+        }.width('100%').height('100%').align(Alignment.Top).id('profileScroll').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
       }
-    }.width('100%').height('100%').backgroundColor(Theme.background)
+    }.width('100%').height('100%').alignContent(Alignment.Top).backgroundColor(Theme.background)
       .onAreaChange((_old: Area, area: Area) => { this.contentWidth = Number(area.width); })
   }
 }

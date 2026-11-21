@@ -12,7 +12,8 @@ export interface TitleAction {
   isEnabled: boolean;
   action: () => void;
 }
-interface TitleMenuItem { content: TitleAction; }
+interface NativeTitleAction extends TitleAction { componentId: string; }
+interface TitleMenuItem { content: NativeTitleAction; }
 
 @ComponentV2
 export struct HdsNav {
@@ -46,19 +47,21 @@ export struct HdsNav {
       Stack() { this.content() }.width('100%').height('100%').backgroundColor(Theme.background)
     }
       .mode(NavigationMode.Stack).navDestination(this.destination)
-      .titleMode(HdsNavigationTitleMode.MINI).hideBackButton(true)
-      .onNavBarStateChange((visible: boolean) => this.onRootVisibleChanged(visible))
-      .titleBar({ style: navigationTitle(this.title, this.experience.materialLevel).style,
-        content: { title: navigationTitle(this.title).content?.title,
-          // A centered Dashboard segment leaves room for one native menu entry.
-          // HDS collects multiple actions into its own overflow menu.
-          menu: { maxCount: 1, value: this.menus.map((item: TitleAction): TitleMenuItem => ({ content: item })) },
-          stackBuilder: () => { this.segment() } } })
       .customNavContentTransition((_from: NavContentInfo, _to: NavContentInfo, operation: NavigationOperation) => {
         if (operation === NavigationOperation.POP) { Haptics.back(); }
         return undefined;
       })
+      .titleMode(HdsNavigationTitleMode.MINI).hideBackButton(true)
+      .onNavBarStateChange((visible: boolean) => this.onRootVisibleChanged(visible))
+      .titleBar({ avoidLayoutSafeArea: true, enableComponentSafeArea: true,
+        style: navigationTitle(this.title, this.experience.materialLevel).style,
+        content: { title: navigationTitle(this.title).content?.title,
+          // A centered Dashboard segment leaves room for one native menu entry.
+          // HDS collects multiple actions into its own overflow menu.
+          menu: { maxCount: 1, value: this.menus.map((item: TitleAction): TitleMenuItem => ({ content: { label: item.label, icon: item.icon, isEnabled: item.isEnabled, action: item.action, componentId: `title-${item.label}` } })) },
+          stackBuilder: this.showSegment ? () => { this.segment() } : undefined } })
       .width('100%').height('100%').backgroundColor(Theme.background)
       .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
+      .accessibilityText('时迹应用导航')
   }
 }

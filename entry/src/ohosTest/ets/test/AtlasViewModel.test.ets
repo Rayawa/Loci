@@ -37,8 +37,9 @@ class ControlledLocation implements VisitLocationSource {
   }
 }
 
-class ReadFailureRepository implements AtlasRepository {
+class ControlledRepository implements AtlasRepository {
   failNextRead: boolean = false;
+  failNextWrite: boolean = false;
   private inner: AtlasRepository;
   constructor(inner: AtlasRepository) { this.inner = inner; }
   listPlaces(): Promise<Place[]> {
@@ -47,7 +48,10 @@ class ReadFailureRepository implements AtlasRepository {
   }
   getPlaceHistory(id: string): Promise<PlaceHistory> { return this.inner.getPlaceHistory(id); }
   getVisit(id: string): Promise<Visit> { return this.inner.getVisit(id); }
-  recordVisit(draft: VisitDraft): Promise<RecordedVisit> { return this.inner.recordVisit(draft); }
+  recordVisit(draft: VisitDraft): Promise<RecordedVisit> {
+    if (this.failNextWrite) { this.failNextWrite = false; return Promise.reject(new Error('本地存储暂时不可用')); }
+    return this.inner.recordVisit(draft);
+  }
   updateMemory(id: string, diary: string, mood: number): Promise<void> { return this.inner.updateMemory(id, diary, mood); }
   deleteVisit(id: string): Promise<void> { return this.inner.deleteVisit(id); }
 }
@@ -57,13 +61,13 @@ export default function atlasViewModelTest(context: common.UIAbilityContext): vo
     let store: relationalStore.RdbStore;
     let name: string = '';
     let location: ControlledLocation;
-    let repository: ReadFailureRepository;
+    let repository: ControlledRepository;
     let model: AtlasViewModel;
 
     beforeEach(async () => {
       name = `loci-viewmodel-test-${util.generateRandomUUID()}.db`;
       store = await AtlasDatabase.open(context, name);
-      repository = new ReadFailureRepository(new RdbAtlasRepository(store));
+      repository = new ControlledRepository(new RdbAtlasRepository(store));
       location = new ControlledLocation();
       model = new AtlasViewModel(repository, location);
       await model.initialize(context);
@@ -94,6 +98,30 @@ export default function atlasViewModelTest(context: common.UIAbilityContext): vo
       expect(model.focus?.id).assertEqual(saved.placeId);
       expect(model.filteredPlaces().length).assertEqual(1);
       expect((await repository.getVisit(saved.visitId)).localDate).assertEqual('2024-07-01');
+    });
+
+    it('failedWriteKeepsDraftAndRetryCommitsExactlyOnce', 0, async () => {
+      const selection = model.selectMap({ latitude: 39.932, longitude: 116.389 });
+      location.finish(); await selection;
+      const draft = model.draft;
+      if (!draft) { throw new Error('未生成草稿'); }
+      const requestId = draft.requestId;
+      repository.failNextWrite = true;
+      let failed = false;
+      try { await model.save(draft); } catch (_) { failed = true; }
+      expect(failed).assertTrue();
+      expect(model.showAdd).assertTrue();
+      expect(model.draft?.requestId).assertEqual(requestId);
+      expect(model.draft?.name).assertEqual('验收地点');
+      expect(model.draft?.diary).assertEqual('补记的一段记忆');
+      expect((await repository.listPlaces()).length).assertEqual(0);
+      expect(model.recentVisit).assertUndefined();
+      expect(model.unlockPlaceId).assertEqual('');
+      const saved = await model.save(draft);
+      expect(model.showAdd).assertFalse();
+      expect((await repository.getVisit(saved.visitId)).diary).assertEqual('补记的一段记忆');
+      expect(model.places.length).assertEqual(1);
+      expect(model.places[0].visitCount).assertEqual(1);
     });
 
     it('committedMemorySurvivesReadFailureAndRetryRevealsPlace', 0, async () => {

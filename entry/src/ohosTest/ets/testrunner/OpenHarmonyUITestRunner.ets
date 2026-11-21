@@ -1,0 +1,18 @@
+import { UiFixture } from '../test/UiFixture';
+import { abilityDelegatorRegistry, TestRunner } from '@kit.TestKit';
+import { Hypium } from '@ohos/hypium';
+
+export default class OpenHarmonyUITestRunner implements TestRunner {
+  onPrepare(): void {}
+  async onRun(): Promise<void> {
+    const delegator = abilityDelegatorRegistry.getAbilityDelegator();
+    try {
+      await delegator.startAbility({ bundleName: 'top.rayawa.loci', abilityName: 'EntryAbility' });
+      const suite = await import('../test/UiShell.test');
+      Hypium.hypiumTest(delegator, abilityDelegatorRegistry.getArguments(), suite.default);
+    } catch (error) {
+      await UiFixture.cleanup();
+      delegator.finishTest((error as Error).message || '无法启动 UI 测试', -1, () => {});
+    }
+  }
+}

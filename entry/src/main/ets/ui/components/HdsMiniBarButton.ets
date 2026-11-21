@@ -1,8 +1,7 @@
-import { deviceInfo } from '@kit.BasicServicesKit';
 import { hdsEffect, HdsTabs, HdsTabsController } from '@kit.UIDesignKit';
 import { curves } from '@kit.ArkUI';
 import { pressLightFieldFilter, pressVisualEffect } from '../../common/visualEffects';
-import { HDS_MATERIAL_TYPE_ADAPTIVE } from '../../common/platformCompatibility';
+import { HDS_MATERIAL_TYPE_ADAPTIVE, SUPPORTS_HARMONY_API_23 } from '../../common/platformCompatibility';
 
 /**
  * 基于 HdsTabs 迷你栏材质的通用按钮承载层。
@@ -57,12 +56,12 @@ export struct HdsMiniBarButton {
         this.onButtonClick();
       }
     })
-    .accessibilityText('切换概况和总表')
+    .accessibilityText('切换当前视图')
   }
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
-      if (deviceInfo.distributionOSApiVersion >= 60100) {
+      if (SUPPORTS_HARMONY_API_23) {
         // 浮动栏的材质阴影由 HdsTabs 内部绘制，透明背景不会关闭它。
         // 单独裁剪背景层，避免阴影溢出胶囊；前景的按压光效仍独立绘制。
         Stack({ alignContent: Alignment.Center }) {
@@ -124,6 +123,6 @@ export struct HdsMiniBarButton {
     .width(this.barWidth)
     .height(this.barHeight)
     .backgroundColor(Color.Transparent)
-    .accessibilityText('概况和总表分段控件')
+    .accessibilityText('页面视图切换')
   }
 }

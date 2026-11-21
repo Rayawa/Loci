@@ -3,6 +3,7 @@ import { getDeviceName } from '../../common/storage';
 import { showToastSafely } from '../../common/safeUi';
 import { clearCompleteCache, getCacheSizeBytes } from '../../common/CacheService';
 import { formatBytes } from '../../common/cacheFormat';
+import { SUPPORTS_HARMONY_API_23 } from '../../common/platformCompatibility';
 import { UsernameEditor } from './UsernameEditor';
 import { HdsListItemCard, IconSize, PrefixIcon } from '@kit.UIDesignKit';
 import { ExperienceSettings, ExperienceOption } from '../../service/settings/ExperienceSettings';
@@ -15,6 +16,7 @@ import { Theme } from '../theme/Theme';
 // Dashboard SettingsPanel builders, with V2 state and Loci persistence bindings.
 @ComponentV2
 export struct ExperiencePanel {
+  @Event onShortOperation: (kind: string) => void = () => {};
   @Param active: boolean = true;
   @Monitor('active')
   onActiveChanged(): void { if (this.active) { this.scheduleCacheSizeRefresh(); } }
@@ -38,16 +40,14 @@ export struct ExperiencePanel {
       this.usernameItem()
       this.divider()
       if (this.vibrationSupported) { this.vibrationLevelItem(); this.divider() }
-      this.divider()
-      this.materialLevelItem()
-      this.divider()
+      if (SUPPORTS_HARMONY_API_23) { this.materialLevelItem(); this.divider() }
       this.trashItem()
     }.width('100%').backgroundColor(Theme.surface).borderRadius(16)
       .shadow({ radius: 8, color: Theme.shadow, offsetY: 2 }).clip(true)
       .enabled(this.experience.ready)
       .onAppear(() => this.scheduleCacheSizeRefresh())
       .onAreaChange((_old: Area, area: Area) => { this.contentWidth = Number(area.width); })
-      .accessibilityText('应用体验设置')
+      .accessibilityGroup(false).accessibilityLevel('no').accessibilityText('应用体验设置')
   }
     private vibrationLevelName(): string {
         if (this.experience.vibrationLevel === 0) {
@@ -432,7 +432,6 @@ export struct ExperiencePanel {
     }
 
 
-  private persistUsername(username: string): void { this.experience.updateUsername(username); }
   private scheduleCacheSizeRefresh(): void {
     if (this.cacheSizeTimer >= 0) { clearTimeout(this.cacheSizeTimer); }
     this.cacheSizeTimer = setTimeout(() => {
@@ -478,11 +477,9 @@ export struct ExperiencePanel {
 
     @Builder
     private usernameContent(): void {
-        UsernameEditor({
-            initialUsername: this.experience.username,
-            narrow: this.isNarrowSettings(),
-            onCommit: (value: string): void => this.persistUsername(value),
-        })
+        UsernameEditor({ initialUsername: this.experience.username, narrow: this.isNarrowSettings(), active: this.active,
+            onCommit: (value: string): Promise<boolean> => this.experience.updateUsername(value) })
+
     }
 
     @Builder

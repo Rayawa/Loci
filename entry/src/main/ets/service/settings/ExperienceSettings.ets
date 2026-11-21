@@ -45,13 +45,14 @@ export class ExperienceSettings {
 
   static supportsHdr(): boolean { return deviceInfo.sdkApiVersion >= 24; }
 
-  updateUsername(value: string): void {
-    if (!this.ready) { return; }
+  async updateUsername(value: string): Promise<boolean> {
+    if (!this.ready) { return false; }
     const captured = value.trim();
-    this.username = captured;
-    this.writes = this.writes.then(() => setUsername(captured)).catch(() => {
-      this.error = '暂时无法保存用户名，请重试';
+    const write = this.writes.then(async () => {
+      await setUsername(captured); this.username = captured; this.error = '';
     });
+    this.writes = write.catch(() => { this.error = '暂时无法保存用户名，请重试'; });
+    try { await write; return true; } catch (_) { return false; }
   }
 
   update(option: ExperienceOption, value: number): void {

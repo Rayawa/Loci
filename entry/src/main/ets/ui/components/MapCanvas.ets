@@ -12,7 +12,7 @@ export struct MapCanvas {
   @Param places: Place[] = [];
   @Param selectedId: string = '';
   @Param focus: Place | undefined = undefined;
-  @Param controlTop: number = 112;
+  @Param controlTop: number = 16;
   @Param presenting: boolean = true;
   @Param revealId: string = '';
   @Event onReveal: (id: string) => void = () => {};
@@ -92,7 +92,7 @@ export struct MapCanvas {
   }
 
   private focusMap(place: Place): void {
-    if (!this.loaded) { return; }
+    if (!this.loaded || !this.presenting) { return; }
     const key = this.retryKey;
     this.mapController?.focus(place).catch(() => {
       if (this.active && key === this.retryKey) { this.error = '暂时无法移动到这个地点，请重试'; }
@@ -100,7 +100,11 @@ export struct MapCanvas {
   }
 
   @Monitor('places', 'selectedId', 'revealId', 'presenting')
-  onPlacesChanged(): void { this.sync(); }
+  onPlacesChanged(): void {
+    if (!this.presenting) { this.clearLoadTimer(); return; }
+    if (!this.loaded && this.loadTimer < 0) { this.watchLoad(this.retryKey); }
+    this.sync();
+  }
 
   @Monitor('focus')
   onFocusChanged(): void {
@@ -108,7 +112,7 @@ export struct MapCanvas {
   }
 
   private sync(): void {
-    if (!this.loaded) { return; }
+    if (!this.loaded || !this.presenting) { return; }
     const key = this.retryKey;
     this.mapController?.sync(this.places, this.selectedId, this.revealId).then(() => this.revealSavedPlace(key)).catch(() => {
       if (this.active && key === this.retryKey) { this.error = '地点标记暂未更新，请重试'; }
@@ -153,7 +157,7 @@ export struct MapCanvas {
   }
 
   aboutToDisappear(): void { this.active = false; this.release(); }
-  aboutToAppear(): void { this.active = true; this.watchLoad(this.retryKey); }
+  aboutToAppear(): void { this.active = true; if (this.presenting) { this.watchLoad(this.retryKey); } }
 
   build() {
     Stack({ alignContent: Alignment.Top }) {

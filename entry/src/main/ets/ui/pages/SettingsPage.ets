@@ -1,3 +1,4 @@
+import { Haptics } from '../../service/haptics/Haptics';
 import { AppIcon } from '../components/AppIcon';
 import { common } from '@kit.AbilityKit';
 import { HdsNavDestination, HdsNavDestinationTitleMode } from '@kit.UIDesignKit';
@@ -12,6 +13,7 @@ import { Theme } from '../theme/Theme';
 
 @ComponentV2
 export struct SettingsPage {
+  @Event onShortOperation: (kind: string) => void = () => {};
   @Local experience: ExperienceSettings = ExperienceSettings.shared;
   @Local animStep: number = 0;
   private enterAnimationTimers: number[] = [];
@@ -32,11 +34,13 @@ export struct SettingsPage {
   aboutToDisappear(): void { cancelStaggerEnterAnimation(this.enterAnimationTimers); this.enterAnimationTimers = []; }
 
   @Builder appIdentity() {
-    Column({ space: 8 }) {
-      AppIcon({ iconSize: 100 }).margin({ bottom: 10 })
-      Text('时迹').fontSize(30).fontWeight(800).fontColor(Theme.accent).textAlign(TextAlign.Center)
-      Text('每日时间记录').fontSize(20).fontWeight(600).fontColor(Theme.muted).textAlign(TextAlign.Center)
-    }.width('100%').padding({ top: 18, bottom: 18, left: 12, right: 12 })
+    Row({ space: 16 }) {
+      AppIcon({ iconSize: 60 })
+      Column({ space: 4 }) {
+        Text('时迹').fontSize(22).fontWeight(FontWeight.Medium).fontColor(Theme.ink)
+        Text('每日时间记录').fontSize(14).fontColor(Theme.muted)
+      }.alignItems(HorizontalAlign.Start).layoutWeight(1)
+    }.width('100%').padding(16).backgroundColor(Theme.surface).borderRadius(Theme.cardRadius).border({ width: 1, color: Theme.line })
       .opacity(this.animStep >= 1 ? 1 : 0).translate({ y: this.animStep >= 1 ? 0 : 20 })
   }
 
@@ -44,13 +48,13 @@ export struct SettingsPage {
     HdsNavDestination() {
       Scroll() {
         Column({ space: LIST_SECTION_SPACING }) {
-          Blank().height(100).width('100%')
+          Blank().height(8).width('100%')
           this.appIdentity()
           Divider().color($r('app.color.border'))
           Column({ space: 8 }) {
             Text('设置').fontSize(14).fontWeight(FontWeight.Bold).fontColor(Theme.accent)
               .width('100%').padding({ left: LIST_SECTION_TITLE_START_PADDING })
-            ExperiencePanel()
+            ExperiencePanel({ onShortOperation: (kind: string) => this.onShortOperation(kind) })
             if (!this.experience.ready && this.experience.error) {
               StatePanel({ title: '暂时无法读取设置', action: '重试',
                 onAction: () => this.experience.initialize(this.getUIContext().getHostContext() as common.UIAbilityContext) })
@@ -71,6 +75,8 @@ export struct SettingsPage {
       .titleBar(destinationTitle('设置', this.experience.materialLevel)).backgroundColor(Theme.background)
       .width('100%').height('100%')
       .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
-      .onActive(() => this.startEnterAnimation())
+      .onShown(() => this.startEnterAnimation())
+      .onHidden(() => { cancelStaggerEnterAnimation(this.enterAnimationTimers); })
+      .onBackPressed(() => { Haptics.back(); return false; })
   }
 }

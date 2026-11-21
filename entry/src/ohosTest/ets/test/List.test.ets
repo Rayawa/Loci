@@ -1,3 +1,4 @@
+import cacheFormatTest from './CacheFormat.test';
 import { common } from '@kit.AbilityKit';
 import activityPersistenceTest from './ActivityPersistence.test';
 import atlasPersistenceTest from './AtlasPersistence.test';
@@ -9,4 +10,5 @@ export default function testsuite(context: common.UIAbilityContext): void {
   atlasPersistenceTest(context);
   atlasViewModelTest(context);
   diskStorageTest(context);
+  cacheFormatTest();
 }

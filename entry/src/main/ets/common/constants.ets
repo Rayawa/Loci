@@ -33,3 +33,7 @@ export const STORAGE_KEY_BUTTON_RIGHT = 'buttonPositionRIGHT';
 export const STORAGE_KEY_SEARCH_HISTORY = 'searchHistory';
 export const DEFAULT_HOLD_CHECK_ENABLED = false;
 export const DEFAULT_BUTTON_RIGHT = false;
+export const MIN_PRESS_FEEDBACK_MS = 140;
+export const CONTENT_MAX_WIDTH = 1440;
+export const RESPONSIVE_BREAKPOINT_MEDIUM = '600vp';
+export const RESPONSIVE_BREAKPOINT_LARGE = '840vp';

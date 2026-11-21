@@ -1,3 +1,4 @@
+import { AppLifecycle } from '../service/app/AppLifecycle';
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
@@ -20,13 +21,18 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    this.startupTask.then(() => windowStage.loadContent('pages/Index', (err) => {
-      if (err.code) {
-        hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
-        return;
-      }
-      hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
-    })).catch((error: Error) => {
+    this.startupTask.then(async () => {
+      // Immersive HDS content expands into system safe areas; align the window's input coordinates too.
+      const mainWindow = await windowStage.getMainWindow();
+      await mainWindow.setWindowLayoutFullScreen(true);
+      windowStage.loadContent('pages/Index', (err) => {
+        if (err.code) {
+          hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
+          return;
+        }
+        hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
+      });
+    }).catch((error: Error) => {
       hilog.error(DOMAIN, 'EntryAbility', 'Failed to initialize page: %{public}s', error.message);
     });
 
@@ -43,11 +49,13 @@ export default class EntryAbility extends UIAbility {
   }
 
   onForeground(): void {
+    AppLifecycle.shared.foreground = true;
     // Ability has brought to foreground
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
   }
 
   onBackground(): void {
+    AppLifecycle.shared.foreground = false;
     // Ability has back to background
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
   }
